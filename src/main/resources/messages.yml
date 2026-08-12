@@ -1,0 +1,141 @@
+# ============================================================================
+#  SOYSOceanBox - 消息文件 (zh_CN)
+# ----------------------------------------------------------------------------
+#  颜色代码使用 & 符号。值为空字符串 '' 时该条消息不会发送。
+#  支持列表形式（多行消息），例如 help.player。
+# ============================================================================
+
+# 所有消息的统一前缀，使用 {prefix} 占位符引用
+prefix: '&8[&d抽奖&8] &r'
+
+# ============================================================================
+#  通用
+# ============================================================================
+general:
+  no-permission: '{prefix}&c你没有权限执行此操作。'
+  player-only: '{prefix}&c该指令只能由玩家执行。'
+  unknown-command: '{prefix}&c未知的子指令 &f{input}&c，输入 &f/{label} help &c查看帮助。'
+  storage-error: '{prefix}&c操作失败，请联系管理员查看控制台。'
+
+# ============================================================================
+#  抽奖
+# ============================================================================
+lottery:
+
+  # ---------- 抽奖 ----------
+  draw:
+    success: '{prefix}&a抽奖成功！获得: &f{reward}'
+    cooldown: '{prefix}&c抽奖冷却中，请在 &f{seconds} &c秒后重试。'
+    no-money: '{prefix}&c你的金币不足，需要 &f{amount} &c金币才能进行抽奖。'
+    no-points: '{prefix}&c你的点券不足，需要 &f{amount} &c点券才能进行抽奖。'
+    no-pool: '{prefix}&c当前没有任何可用的奖项，请联系管理员配置抽奖池。'
+    error: '{prefix}&c抽奖系统异常（可能缺少 Vault/PlayerPoints），请联系管理员。'
+
+  # ---------- 领取 ----------
+  claim:
+    empty: '{prefix}&7你当前没有待领取的奖励。'
+    success: '{prefix}&a成功领取 &f{count} &a个奖励！'
+    partial-failed: '{prefix}&c有 &f{count} &c个奖励发放失败: &f{items}'
+
+  # ---------- 待领取列表 ----------
+  list:
+    empty: '{prefix}&7你当前没有待领取的奖励。'
+    header: '&8&m---------&r &d待领取奖励 &8&m---------'
+    entry: '&8 • &f{index}. {reward}'
+    footer: '&8&m------------------------------&r &7共 &f{count} &7个'
+
+  # ---------- 全服广播大额中奖 ----------
+  broadcast:
+    big-win: '&6[大奖] &f{player} &e抽中了 &f{reward} &e！'
+
+  # ---------- 依赖缺失友好提示 ----------
+  draw:
+    no-vault: '{prefix}&c抽奖系统未加载 Vault 经济，无法使用金币抽奖，请联系管理员。'
+    no-playerpoints: '{prefix}&c抽奖系统未加载 PlayerPoints，无法使用点券抽奖，请联系管理员。'
+    daily-limit: '{prefix}&c你今日抽奖次数已达上限（&f{limit}&c 次），请于约 &f{seconds} &c秒后重试。'
+    weekly-limit: '{prefix}&c你本周抽奖次数已达上限（&f{limit}&c 次）。'
+
+  # ---------- 奖池 ----------
+  pool:
+    locked: '{prefix}&c当前服务器不允许玩家自行切换奖池。'
+    unknown: '{prefix}&c未知奖池 &f{pool}&c，可用: &f{pools}'
+    switched: '{prefix}&a已切换到奖池 &f{pool}&a。'
+    header: '&8&m---------&r &d可用奖池 &8&m---------'
+    entry: '&8 {mark} &f{pool} &7(&f{count}&7 项)'
+    footer: '&8&m------------------------------&r &7当前奖池: &f{current}'
+
+  # ---------- 被管理员发放 ----------
+  claim:
+    given: '{prefix}&a管理员向你发放了奖励: &f{reward}&a，使用 &f/soceanbox claim &a领取。'
+
+# ============================================================================
+#  帮助
+# ============================================================================
+help:
+  player:
+    - '&8&m---------&r &d抽奖指令 &8&m---------'
+    - '&8 • &f/{label} draw &7- 消耗货币进行抽奖'
+    - '&8 • &f/{label} claim [all|序号] &7- 领取奖励（默认领取全部）'
+    - '&8 • &f/{label} list &7- 查看待领取奖励'
+    - '&8 • &f/{label} pool [名称] &7- 查看/切换奖池'
+    - '&8 • &f/{label} help &7- 显示本帮助'
+    - '&8&m------------------------------'
+  admin:
+    - '&8&m---------&r &c抽奖管理 &8&m---------'
+    - '&8 • &f/{label} reload &7- 重载配置与存储连接'
+    - '&8 • &f/{label} give <玩家> <奖池id|money|points|item> [数量] [材质] &7- 发放奖励'
+    - '&8 • &f/{label} reset <玩家> &7- 清空玩家待领取与计数'
+    - '&8 • &f/{label} delete <玩家> &7- 删除玩家档案'
+    - '&8 • &f/{label} storage &7- 查看存储后端状态'
+    - '&8 • &f/{label} migrate <来源> <目标> [overwrite] &7- 迁移数据'
+    - '&8 • &f/{label} sync &7- 同步主存储到辅助存储'
+    - '&8 • &f/{label} setpool <玩家> <奖池> &7- 为玩家指定奖池'
+    - '&8 • &f/{label} rates [奖池] [样本数] &7- 模拟各奖命中率（调试）'
+    - '&8&m------------------------------'
+
+# ============================================================================
+#  管理指令
+# ============================================================================
+admin:
+  reload:
+    success: '{prefix}&a配置已重载，耗时 &f{ms}ms&a。'
+    failed: '{prefix}&c配置重载失败，详情请查看控制台。'
+  player-offline: '{prefix}&c未找到在线或已记录的玩家 &f{player}&c。'
+  give:
+    usage: '{prefix}&c用法: /{label} give <玩家> <奖池id|money|points|item> [数量] [材质]'
+    unknown: '{prefix}&c无法识别的奖励类型或奖池 id: &f{kind}'
+    success: '{prefix}&a已向 &f{player} &a发放奖励: &f{reward}'
+  reset:
+    usage: '{prefix}&c用法: /{label} reset <玩家>'
+    success: '{prefix}&a已重置 &f{player} &a的待领取奖励与计数。'
+  delete:
+    usage: '{prefix}&c用法: /{label} delete <玩家>'
+    success: '{prefix}&a已删除 &f{player} &a的抽奖档案。'
+  storage:
+    header: '&8&m---------&r &c存储后端状态 &8&m---------'
+    primary: '&8 • &f主存储: &a{backend}'
+    line: '&8 • &f{line}'
+    footer: '&8&m------------------------------'
+  migrate:
+    usage: '{prefix}&c用法: /{label} migrate <yaml|sqlite|mysql> <yaml|sqlite|mysql> [overwrite]'
+    unknown: '{prefix}&c未知的存储后端，可用: &fyaml / sqlite / mysql'
+    same: '{prefix}&c来源与目标不能相同。'
+    start: '{prefix}&e正在从 &f{from} &e迁移到 &f{to} &e...'
+    done: '{prefix}&a迁移完成，共处理 &f{count} &a名玩家。'
+    failed: '{prefix}&c迁移失败: &f{error}'
+  sync:
+    no-secondary: '{prefix}&c没有可用的辅助存储，无需同步。'
+    start: '{prefix}&e正在将主存储同步到辅助存储...'
+    done: '{prefix}&a同步完成，共写入 &f{count} &a名玩家。'
+    failed: '{prefix}&c同步失败: &f{error}'
+  setpool:
+    usage: '{prefix}&c用法: /{label} setpool <玩家> <奖池名>'
+    unknown: '{prefix}&c未知奖池 &f{pool}&c，可用: &f{pools}'
+    success: '{prefix}&a已为 &f{player} &a指定奖池 &f{pool}&a。'
+  rates:
+    usage: '{prefix}&c用法: /{label} rates [奖池名] [样本数]'
+    unknown-pool: '{prefix}&c未知奖池 &f{pool}&c，可用: &f{pools}'
+    header: '&8&m---------&r &c命中率模拟 &8&m---------'
+    summary: '&8 • &7奖池: &f{pool} &7| 样本: &f{samples} &7| 总权重: &f{total}'
+    entry: '&8 • &f{reward} &7权重 &f{weight} &7(理论 &f{theory}%) &7实测 &a{actual}%'
+    footer: '&8&m------------------------------&r &7耗时 {ms}ms'

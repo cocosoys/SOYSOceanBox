@@ -1,0 +1,135 @@
+# ============================================================================
+#  SOYSOceanBox - Message file (en_US)
+# ----------------------------------------------------------------------------
+#  English overlay for messages.yml. Only keys present here override the
+#  default zh_CN messages. Missing keys fall back to the default file.
+#  Color codes use the & symbol. An empty string '' means the message is suppressed.
+# ============================================================================
+
+prefix: '&8[&dLottery&8] &r'
+
+# ============================================================================
+#  General
+# ============================================================================
+general:
+  no-permission: '{prefix}&cYou do not have permission to do this.'
+  player-only: '{prefix}&cThis command can only be used by a player.'
+  unknown-command: '{prefix}&cUnknown sub-command &f{input}&c, type &f/{label} help &cfor help.'
+  storage-error: '{prefix}&cOperation failed, please contact an admin and check the console.'
+
+# ============================================================================
+#  Lottery
+# ============================================================================
+lottery:
+
+  # ---------- Draw ----------
+  draw:
+    success: '{prefix}&aDraw successful! You got: &f{reward}'
+    cooldown: '{prefix}&cDraw is on cooldown, please wait &f{seconds} &cseconds.'
+    no-money: '{prefix}&cYou do not have enough money, you need &f{amount} &ccoins to draw.'
+    no-points: '{prefix}&cYou do not have enough points, you need &f{amount} &cpoints to draw.'
+    no-pool: '{prefix}&cThere are no available rewards right now, please ask an admin to configure a pool.'
+    error: '{prefix}&cLottery system error (Vault/PlayerPoints may be missing), please contact an admin.'
+    no-vault: '{prefix}&cThe lottery system has no Vault economy loaded, coin draws are unavailable, please contact an admin.'
+    no-playerpoints: '{prefix}&cThe lottery system has no PlayerPoints loaded, point draws are unavailable, please contact an admin.'
+    daily-limit: '{prefix}&cYou have reached the daily draw limit (&f{limit}&c), please try again in about &f{seconds} &cseconds.'
+    weekly-limit: '{prefix}&cYou have reached the weekly draw limit (&f{limit}&c).'
+
+  # ---------- Claim ----------
+  claim:
+    empty: '{prefix}&7You have no pending rewards.'
+    success: '{prefix}&aSuccessfully claimed &f{count} &areward(s)!'
+    partial-failed: '{prefix}&cFailed to grant &f{count} &creward(s): &f{items}'
+    given: '{prefix}&aAn admin granted you a reward: &f{reward}&a, use &f/soceanbox claim &a to claim it.'
+
+  # ---------- Pending list ----------
+  list:
+    empty: '{prefix}&7You have no pending rewards.'
+    header: '&8&m---------&r &dPending Rewards &8&m---------'
+    entry: '&8 • &f{index}. {reward}'
+    footer: '&8&m------------------------------&r &7Total: &f{count}'
+
+  # ---------- Server-wide big win broadcast ----------
+  broadcast:
+    big-win: '&6[Big Win] &f{player} &ewon &f{reward} &e!'
+
+  # ---------- Pools ----------
+  pool:
+    locked: '{prefix}&cPlayers are not allowed to switch pools on this server.'
+    unknown: '{prefix}&cUnknown pool &f{pool}&c, available: &f{pools}'
+    switched: '{prefix}&aSwitched to pool &f{pool}&a.'
+    header: '&8&m---------&r &dAvailable Pools &8&m---------'
+    entry: '&8 {mark} &f{pool} &7(&f{count}&7 items)'
+    footer: '&8&m------------------------------&r &7Current pool: &f{current}'
+
+# ============================================================================
+#  Help
+# ============================================================================
+help:
+  player:
+    - '&8&m---------&r &dLottery Commands &8&m---------'
+    - '&8 • &f/{label} draw &7- spend currency to draw'
+    - '&8 • &f/{label} claim [all|index] &7- claim rewards (default: all)'
+    - '&8 • &f/{label} list &7- view pending rewards'
+    - '&8 • &f/{label} pool [name] &7- view/switch pool'
+    - '&8 • &f/{label} help &7- show this help'
+    - '&8&m------------------------------'
+  admin:
+    - '&8&m---------&r &cLottery Admin &8&m---------'
+    - '&8 • &f/{label} reload &7- reload config and storage'
+    - '&8 • &f/{label} give <player> <poolId|money|points|item> [amount] [material] &7- grant a reward'
+    - '&8 • &f/{label} reset <player> &7- clear pending rewards and counters'
+    - '&8 • &f/{label} delete <player> &7- delete player profile'
+    - '&8 • &f/{label} storage &7- view storage backend status'
+    - '&8 • &f/{label} migrate <from> <to> [overwrite] &7- migrate data'
+    - '&8 • &f/{label} sync &7- sync primary storage to secondary'
+    - '&8 • &f/{label} setpool <player> <pool> &7- assign a pool to a player'
+    - '&8 • &f/{label} rates [pool] [samples] &7- simulate hit rates (debug)'
+    - '&8&m------------------------------'
+
+# ============================================================================
+#  Admin commands
+# ============================================================================
+admin:
+  reload:
+    success: '{prefix}&aConfig reloaded in &f{ms}ms&a.'
+    failed: '{prefix}&cConfig reload failed, see console for details.'
+  player-offline: '{prefix}&cNo online or known player named &f{player}&c.'
+  give:
+    usage: '{prefix}&cUsage: /{label} give <player> <poolId|money|points|item> [amount] [material]'
+    unknown: '{prefix}&cUnrecognized reward type or pool id: &f{kind}'
+    success: '{prefix}&aGranted reward to &f{player}&a: &f{reward}'
+  reset:
+    usage: '{prefix}&cUsage: /{label} reset <player>'
+    success: '{prefix}&aReset pending rewards and counters for &f{player}&a.'
+  delete:
+    usage: '{prefix}&cUsage: /{label} delete <player>'
+    success: '{prefix}&aDeleted lottery profile for &f{player}&a.'
+  storage:
+    header: '&8&m---------&r &cStorage Backend Status &8&m---------'
+    primary: '&8 • &fPrimary: &a{backend}'
+    line: '&8 • &f{line}'
+    footer: '&8&m------------------------------'
+  migrate:
+    usage: '{prefix}&cUsage: /{label} migrate <yaml|sqlite|mysql> <yaml|sqlite|mysql> [overwrite]'
+    unknown: '{prefix}&cUnknown storage backend, available: &fyaml / sqlite / mysql'
+    same: '{prefix}&cSource and target must differ.'
+    start: '{prefix}&eMigrating from &f{from} &e to &f{to} &e...'
+    done: '{prefix}&aMigration complete, processed &f{count} &aplayers.'
+    failed: '{prefix}&cMigration failed: &f{error}'
+  sync:
+    no-secondary: '{prefix}&cNo secondary storage available, nothing to sync.'
+    start: '{prefix}&eSyncing primary storage to secondary...'
+    done: '{prefix}&aSync complete, wrote &f{count} &aplayers.'
+    failed: '{prefix}&cSync failed: &f{error}'
+  setpool:
+    usage: '{prefix}&cUsage: /{label} setpool <player> <pool>'
+    unknown: '{prefix}&cUnknown pool &f{pool}&c, available: &f{pools}'
+    success: '{prefix}&aAssigned pool &f{pool} &a to &f{player}&a.'
+  rates:
+    usage: '{prefix}&cUsage: /{label} rates [pool] [samples]'
+    unknown-pool: '{prefix}&cUnknown pool &f{pool}&c, available: &f{pools}'
+    header: '&8&m---------&r &cHit Rate Simulation &8&m---------'
+    summary: '&8 • &7Pool: &f{pool} &7| Samples: &f{samples} &7| Total weight: &f{total}'
+    entry: '&8 • &f{reward} &7weight &f{weight} &7(理论 &f{theory}%) &7实测 &a{actual}%'
+    footer: '&8&m------------------------------&r &7done in {ms}ms'

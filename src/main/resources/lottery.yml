@@ -1,0 +1,123 @@
+# ============================================================================
+#  SOYSOceanBox - 抽奖核心规则配置文件
+# ----------------------------------------------------------------------------
+#  本文件专用于抽奖规则，与 config.yml 分离，便于单独维护奖池与消耗策略。
+#
+#  修改本文件后使用 /soceanboxadmin reload 重载。
+#  注: 抽奖规则属于「热重载安全」配置，重载后立即生效，无需重启服务器。
+# ============================================================================
+
+# 配置文件版本，用于自动升级检测，请勿手动修改
+config-version: 2
+
+
+# ============================================================================
+#  抽奖核心规则
+# ============================================================================
+
+# 两次抽奖之间的最小间隔（秒），0 = 无冷却
+cooldown-seconds: 3
+
+# 抽奖消耗
+cost:
+  # 是否启用消耗
+  enabled: true
+  # 消耗类型: money（Vault 经济）| points（PlayerPoints 点券）
+  type: points
+  # 每次抽奖消耗的数量
+  amount: 100
+
+# 中奖是否全服广播
+broadcast-big-win: true
+# 触发广播的最高权重（仅当 broadcast-big-win 为 true 时生效）；
+# 0 = 不按权重筛选（任何中奖都广播）；>0 = 仅当奖项权重 <= 该值时广播（权重越小越稀有）
+broadcast-below-weight: 15
+
+# ============================================================
+#  每日 / 每周抽奖上限
+# ============================================================
+limits:
+  daily:
+    enabled: false
+    amount: 50
+  weekly:
+    enabled: false
+    amount: 200
+
+# ============================================================
+#  概率保底（pity）
+# ------------------------------------------------------------
+#  玩家连续未抽中「保底池」奖项的次数达到 after 后，
+#  下一次抽奖将强制从 pity.pool 中列出的奖项抽取。
+# ============================================================
+pity:
+  enabled: false
+  after: 50
+  # 保底池：连续未抽中保底池奖项达到 after 次后，下一次强制从保底池抽取。
+  # 支持两种写法（可混用，旧式平铺列表权重均为 1）：
+  #   pool: [emerald_cmd, diamond]
+  #   pool:
+  #     - id: emerald_cmd
+  #       weight: 3
+  #     - id: diamond
+  #       weight: 1
+  pool:
+    - id: emerald_cmd
+      weight: 3
+    - id: diamond
+      weight: 1
+
+# ============================================================
+#  多奖池
+# ------------------------------------------------------------
+#  default-pool: 默认生效的奖池名
+#  allow-player-switch: 是否允许玩家用 /soceanbox pool <名称> 自行切换
+#  pools.<名称>: 每个奖池是一组奖项（字段同单奖池）
+# ============================================================
+default-pool: default
+allow-player-switch: true
+
+pools:
+  default:
+    - id: coins
+      type: money
+      amount: 1000
+      weight: 40
+      display: '&e1000 金币'
+    - id: points
+      type: points
+      amount: 50
+      weight: 30
+      display: '&b50 点券'
+    - id: diamond
+      type: item
+      material: DIAMOND
+      amount: 1
+      weight: 20
+      display: '&b钻石 x1'
+    - id: emerald_cmd
+      type: command
+      command: 'give {player} minecraft:emerald 1'
+      weight: 10
+      display: '&a绿宝石 x1（指令发放）'
+
+  # 示例第二个奖池：管理员可用 /soceanboxadmin setpool <玩家> vip 指定
+  vip:
+    - id: vip_money
+      type: money
+      amount: 5000
+      weight: 50
+      display: '&e5000 金币'
+    - id: vip_item
+      type: item
+      material: NETHERITE_INGOT
+      amount: 1
+      weight: 30
+      display: '&d下界合金锭 x1'
+      custom-model-data: 1001
+      nbt: '{display:{Name:"{\"text\":\"★ VIP 专属 ★\"}"}}'
+    - id: vip_cmd
+      type: command
+      command: 'give {player} minecraft:diamond 3'
+      weight: 20
+      display: '&b钻石 x3（指令发放）'

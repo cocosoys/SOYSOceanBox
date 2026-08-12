@@ -1,0 +1,95 @@
+name: SOYSOceanBox
+version: '${project.version}'
+main: soys.soysoceanbox.SOYSOceanBox
+author: SOYS
+description: Minecraft 抽奖插件，玩家指令抽奖并领取礼品（依赖 Vault / PlayerPoints / PlaceholderAPI）
+website: https://github.com/soys
+
+depend:
+  - Vault
+  - PlayerPoints
+  - PlaceholderAPI
+
+commands:
+  soceanbox:
+    description: SOYSOceanBox 玩家抽奖指令
+    usage: /soceanbox help
+    aliases:
+      - chou
+      - 抽奖
+  soceanboxadmin:
+    description: SOYSOceanBox 管理指令
+    usage: /soceanboxadmin help
+    aliases:
+      - sobadmin
+      - 抽奖管理
+
+permissions:
+  # ============================================================
+  #  玩家基础权限
+  # ============================================================
+  soysoceanbox.use:
+    description: 允许使用抽奖基础指令（help / list）
+    default: true
+  soysoceanbox.draw:
+    description: 允许进行抽奖
+    default: true
+  soysoceanbox.claim:
+    description: 允许领取奖励
+    default: true
+  soysoceanbox.pool:
+    description: 允许切换奖池
+    default: true
+  soysoceanbox.player:
+    description: 玩家权限合集
+    default: true
+    children:
+      soysoceanbox.use: true
+      soysoceanbox.draw: true
+      soysoceanbox.claim: true
+      soysoceanbox.pool: true
+
+  # ============================================================
+  #  管理员权限
+  # ============================================================
+  soysoceanbox.admin.reload:
+    description: 允许重载配置文件
+    default: op
+  soysoceanbox.admin.give:
+    description: 允许直接发放奖励给玩家
+    default: op
+  soysoceanbox.admin.reset:
+    description: 允许重置玩家抽奖档案
+    default: op
+  soysoceanbox.admin.delete:
+    description: 允许删除玩家抽奖档案
+    default: op
+  soysoceanbox.admin.storage:
+    description: 允许查看存储后端状态
+    default: op
+  soysoceanbox.admin.migrate:
+    description: 允许在存储后端之间迁移数据
+    default: op
+  soysoceanbox.admin.sync:
+    description: 允许将主存储同步到辅助存储
+    default: op
+  soysoceanbox.admin.setpool:
+    description: 允许为玩家指定奖池
+    default: op
+  soysoceanbox.admin.rates:
+    description: 允许模拟奖池命中率（调试）
+    default: op
+  soysoceanbox.admin:
+    description: 管理员权限合集
+    default: op
+    children:
+      soysoceanbox.player: true
+      soysoceanbox.admin.reload: true
+      soysoceanbox.admin.give: true
+      soysoceanbox.admin.reset: true
+      soysoceanbox.admin.delete: true
+      soysoceanbox.admin.storage: true
+      soysoceanbox.admin.migrate: true
+      soysoceanbox.admin.sync: true
+      soysoceanbox.admin.setpool: true
+      soysoceanbox.admin.rates: true

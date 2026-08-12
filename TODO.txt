@@ -1,0 +1,117 @@
+================================================================================
+SOYSOceanBox 开发 TODO
+Spigot 1.12.2 抽奖插件（玩家指令抽奖 → 产出待领取奖励 → 领取）
+强制依赖: Vault（经济）/ PlayerPoints（点券）/ PlaceholderAPI
+最后更新: 2026-08-11
+================================================================================
+
+图例:
+  [x]  已完成
+  [ ]  待完成 / 规划中
+  [/]  部分完成
+
+
+================================================================================
+一、已完成（Completed）
+================================================================================
+
+【构建与依赖】
+[x] 修复 pom.xml（补全坐标、Spigot 快照仓库、provided 依赖、保留 shade）
+[x] 依赖坐标按规范: VaultAPI=com.github.MilkBowl:VaultAPI:1.7
+                         PlayerPoints=org.black_ixx:PlayerPoints:2.1.3
+                         三者均 provided scope
+[x] 引入 JUnit5 + maven-surefire（junit-jupiter:5.10.2, surefire:3.0.0）
+
+【抽奖核心 v1】
+[x] 移植 SOYSLinkTeam 的 storage/config/util/command 抽象
+[x] 存储后端: DataStorage 接口 + StorageManager（主辅镜像模型）
+    MYSQL > SQLITE > YAML 优先级；读走主库，写镜像到辅助库
+[x] 落地 MysqlStorage / SqliteStorage / YamlStorage
+[x] 抽奖领域模型: LotteryPlayer + PendingReward + RewardDef
+[x] LotteryManager: 冷却、Vault/PlayerPoints 消耗、按权重抽奖、领取发放
+    （money / points / item / command 四类奖励）
+[x] 指令: /soceanbox（draw/claim/list/help/pool）、/soceanboxadmin（reload 等）
+[x] plugin.yml depend 三依赖；权限节点 soysoceanbox.*
+[x] PlaceholderHook 注册 %soysoceanbox_pending% 等变量
+
+【配置分离】
+[x] 抽奖规则从 config.yml 拆到独立 lottery.yml（config-version: 2）
+[x] 新增 LotteryConfig 承载冷却/消耗/奖池/rollReward；reload 同时重载两份 yml
+
+【功能扩张（第二批需求）】
+[x] 指令重命名: lottery → soceanbox, lotteryadmin → soceanboxadmin
+[x] 管理员指令补齐: give / reset / delete / storage / migrate / sync / setpool
+    （migrate/sync 后端 StorageManager 早已支持，本次接命令）
+[x] 全服广播大额中奖: broadcast-big-win 配置接逻辑
+    （按 broadcast-below-weight 阈值向在线玩家广播）
+[x] 每日/每周抽奖上限: LotteryPlayer 增 daily/weekly key+count
+    rollover 由 LotteryMath.dailyKey/weeklyKey/isNew*Cycle/millisUntilNextDay 提供
+[x] 概率保底: pity（after / pool），drawsSinceBigWin 计数，达标限入保底池
+[x] 多奖池切换: lottery.yml pools.<name>；玩家 soceanbox pool 查看/切换；
+    管理员 setpool 强制（受 allow-player-switch 控制）
+[x] 物品奖励 NBT / CustomModelData: RewardDef/PendingReward 增字段；
+    NbtHelper 反射安全施加（1.12.2 JsonToNBT），失败优雅降级
+[x] Vault/PlayerPoints 缺失友好提示与降级: draw() 返回
+    NO_VAULT/NO_PLAYERPOINTS/NO_MONEY/NO_POINTS，DrawSub 区分提示
+[x] 热重载边界处理: reloadConfiguration() 先 saveAllBlocking() 再 clearCache()
+[x] 多语言脚手架: messages.yml 基础键 + MessageManager.overlayLanguageFile()
+    （本期仅 zh_CN；读取 messages_<lang>.yml）
+[x] 单元测试: LotteryMathTest / RewardDefTest / PendingRewardTest（纯逻辑）
+[x] 存储前向兼容: SqlStorage 容忍 ALTER；Yaml/Sql/Mysql 新增 6 列
+[x] 文案清理: 6 处 Java 注释 + 3 处 config.yml 注释旧 /lottery 文案统一
+
+【质量校验】
+[x] 三份 YAML 经 pyyaml 解析通过
+[x] 58 个被引用 message key 全部存在，无缺失（2026-08-12 复核：83 个键、Java 引用 63 个、0 缺失；en_US 83 键 0 孤儿）
+[x] 源码无残留 /lottery 功能引用（仅保留别名 chou/抽奖）
+[x] 新增单元测试 ConfigUpgraderTest（配置合并/升级逻辑，纯逻辑无需服务器）
+
+
+================================================================================
+二、待完成 / 规划中（TODO）
+================================================================================
+
+【本地构建验证（用户环境执行，沙箱无 JDK/Maven）】
+[ ] 本地执行 mvn clean package，确认编译/测试通过
+[ ] 确认 Vault / PlayerPoints 仓库可达
+    （若报 org.black_ixx.playerpoints 找不到，需在 pom 加
+     https://repo.codemc.io/repository/maven-public/ 仓库）
+[ ] 服务端实测: 抽奖/领取/广播/上限/保底/多奖池/管理员指令
+
+【交互体验增强】
+[ ] GUI 抽奖界面（Inventory GUI，点击抽奖/查看奖池）
+[ ] 抽奖动画 / 音效（抽中特效、播报音）
+[ ] 命令补全（TabCompleter: 玩家名、奖池名、子命令）
+[ ] 待领取奖励过期机制（可选 TTL）
+[ ] 抽奖历史 / 个人统计（总抽奖次数、中奖记录）
+
+【配置与运维】
+[x] 多语言补全: en_US（messages_en_US.yml，83 键完整翻译；MessageManager 叠加支持列表键与 jar 资源回退）
+[x] config-version 自动升级迁移: 新增 ConfigUpgrader，LotteryConfig/ConfigManager reload 时自动合并缺失键并升级版本号（保留用户值）
+[x] pity 权重独立配置: 保底池支持 id+weight 列表，向后兼容旧平铺列表（权重=1）
+[x] 奖池概率可视化工具: /soceanboxadmin rates [奖池] [样本数] 蒙特卡洛模拟输出实测/理论命中率
+[x] 数据库索引优化: SQL 存储新增 active_pool 二级索引（MySQL/Sqlite，含容忍式迁移）；uuid 为主键聚簇索引已天然高效
+
+【扩展功能（可选）】
+[ ] 排行榜（服务端/周榜，结合每日/每周上限）
+[ ] 节日/限时奖池（按时间自动启停）
+[ ] 抽奖条件前置（如需特定权限/等级/道具才能抽）
+[ ] Placeholder 变量扩展（%soysoceanbox_daily_left% 等）
+[ ] 跨服数据同步（多实例共享主库）
+
+【测试增强】
+[ ] 集成测试（借助 mock 或测试服框架跑 draw/claim 全流程）
+[ ] 边界用例: 玩家离线时 give/reset、超大数字金额、并发抽奖
+
+
+================================================================================
+三、备注
+================================================================================
+
+- 本插件的"待完成名单"源自 v1 规划，GUI/动画/音效 等体验项尚未动工。
+- 第二批需求已覆盖原名单中的: 管理员指令、广播、上限/保底/多奖池、
+  NBT/CMD、依赖降级、热重载、多语言脚手架、单元测试。
+- target/classes/ 中残留的旧 /lottery 文案为历史构建产物，
+  下次 mvn clean package 会被重新生成，无需手动处理。
+- 工作区无 JDK/Maven，所有"编译/测试通过"需用户本地验证。
+================================================================================
