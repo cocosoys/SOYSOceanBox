@@ -75,6 +75,15 @@ public class DrawSub extends SubCommand {
             case NO_POOL:
                 msg(player, "lottery.draw.no-pool", null);
                 break;
+            case PREREQUISITE:
+                if (result.requirement != null) {
+                    msg(player, "lottery.draw.prerequisite",
+                            Placeholders.of("require", result.requirement.describe()).build());
+                } else {
+                    msg(player, "lottery.draw.prerequisite",
+                            Placeholders.of("require", "未知条件").build());
+                }
+                break;
             case ERROR:
             default:
                 msg(player, "lottery.draw.error", null);

@@ -79,6 +79,9 @@ permissions:
   soysoceanbox.admin.rates:
     description: 允许模拟奖池命中率（调试）
     default: op
+  soysoceanbox.admin.rank:
+    description: 允许查看抽奖排行榜
+    default: op
   soysoceanbox.admin:
     description: 管理员权限合集
     default: op
@@ -93,3 +96,4 @@ permissions:
       soysoceanbox.admin.sync: true
       soysoceanbox.admin.setpool: true
       soysoceanbox.admin.rates: true
+      soysoceanbox.admin.rank: true

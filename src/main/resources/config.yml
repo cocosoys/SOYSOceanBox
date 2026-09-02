@@ -10,7 +10,7 @@
 # ============================================================================
 
 # 配置文件版本，用于自动升级检测，请勿手动修改
-config-version: 1
+config-version: 2
 
 
 # ============================================================================
@@ -60,6 +60,16 @@ storage:
       keepalive-interval: 1800
 
   # --------------------------------------------------------------
+  #  跨服数据同步
+  # --------------------------------------------------------------
+  #  开启后，多个服务端实例共享同一份玩家抽奖数据。
+  #  前提：所有实例的 storage.backends.mysql.enabled 必须设为 true 且指向同一数据库，
+  #  此时 MySQL 自动成为「主存储」，抽奖数据跨服可见。
+  #  注意：实例各自仍可将本地 yaml/sqlite 作为热备份（辅助存储），但请勿在
+  #  多实例间互相同步（sync 命令 / sync-on-startup），以免覆盖共享数据。
+  cross-server: false
+
+  # --------------------------------------------------------------
   #  辅助存储镜像写入
   # --------------------------------------------------------------
   mirror:
@@ -81,9 +91,17 @@ command:
 #  PlaceholderAPI 变量
 # ----------------------------------------------------------------------------
 #  可用变量:
-#    %soysoceanbox_pending%      待领取奖励数量
-#    %soysoceanbox_total_draws%  累计抽奖次数
-#    %soysoceanbox_last_draw%    上次抽奖时间戳（毫秒）
+#    %soysoceanbox_pending%          待领取奖励数量
+#    %soysoceanbox_total_draws%      累计抽奖次数
+#    %soysoceanbox_last_draw%        上次抽奖时间戳（毫秒）
+#    %soysoceanbox_daily_left%       今日剩余可抽次数（无限时为 ∞）
+#    %soysoceanbox_weekly_left%      本周剩余可抽次数（无限时为 ∞）
+#    %soysoceanbox_daily_count%      今日已抽次数
+#    %soysoceanbox_weekly_count%     本周已抽次数
+#    %soysoceanbox_active_pool%      当前生效奖池名
+#    %soysoceanbox_pity_left%        距触发保底还差次数（无限时为 ∞）
+#    %soysoceanbox_cooldown_left%    冷却剩余秒数
+#    %soysoceanbox_cooldown_left_ms% 冷却剩余毫秒
 # ============================================================================
 placeholder:
   no-pending: '&7暂无待领取奖励'

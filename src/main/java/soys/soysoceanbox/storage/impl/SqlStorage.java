@@ -282,8 +282,8 @@ public abstract class SqlStorage implements DataStorage {
     private void writePlayer(Connection conn, LotteryPlayer player) throws SQLException {
         String sql = "REPLACE INTO " + playersTable()
                 + " (uuid, name, last_draw, total_draws, daily_key, daily_count,"
-                + " weekly_key, weekly_count, draws_since_big_win, active_pool, pending)"
-                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                + " weekly_key, weekly_count, draws_since_big_win, active_pool, pending, history)"
+                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement statement = conn.prepareStatement(sql)) {
             statement.setString(1, player.getUuid().toString());
             statement.setString(2, player.getName());
@@ -296,6 +296,7 @@ public abstract class SqlStorage implements DataStorage {
             statement.setInt(9, player.getDrawsSinceBigWin());
             statement.setString(10, player.getActivePool());
             statement.setString(11, serializePending(player.getPending()));
+            statement.setString(12, serializeHistory(player.getHistory()));
             statement.executeUpdate();
         }
     }
@@ -319,6 +320,12 @@ public abstract class SqlStorage implements DataStorage {
         String pendingText = rs.getString("pending");
         for (PendingReward reward : deserializePending(pendingText)) {
             player.addPending(reward);
+        }
+        if (hasColumn(rs, "history")) {
+            String historyText = rs.getString("history");
+            for (LotteryPlayer.WinRecord rec : deserializeHistory(historyText)) {
+                player.getHistory().add(rec);
+            }
         }
         return player;
     }
@@ -374,6 +381,38 @@ public abstract class SqlStorage implements DataStorage {
             ConfigurationSection section = root.getConfigurationSection(key);
             if (section != null) {
                 result.add(PendingReward.read(section));
+            }
+        }
+        return result;
+    }
+
+    // ================================================================
+    //  中奖记录的序列化（TEXT 列，每行一条 encode 文本）
+    // ================================================================
+
+    protected String serializeHistory(List<LotteryPlayer.WinRecord> history) {
+        if (history == null || history.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (LotteryPlayer.WinRecord rec : history) {
+            if (sb.length() > 0) {
+                sb.append('\n');
+            }
+            sb.append(rec.encode());
+        }
+        return sb.toString();
+    }
+
+    protected List<LotteryPlayer.WinRecord> deserializeHistory(String text) {
+        List<LotteryPlayer.WinRecord> result = new ArrayList<>();
+        if (text == null || text.trim().isEmpty()) {
+            return result;
+        }
+        for (String line : text.split("\n", -1)) {
+            LotteryPlayer.WinRecord rec = LotteryPlayer.WinRecord.decode(line);
+            if (rec != null) {
+                result.add(rec);
             }
         }
         return result;

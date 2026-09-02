@@ -1,5 +1,6 @@
 package soys.soysoceanbox.command.sub;
 
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import soys.soysoceanbox.SOYSOceanBox;
 import soys.soysoceanbox.command.SubCommand;
@@ -7,6 +8,7 @@ import soys.soysoceanbox.lottery.LotteryPlayer;
 import soys.soysoceanbox.util.Placeholders;
 import soys.soysoceanbox.util.Text;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -65,12 +67,32 @@ public class PoolSub extends SubCommand {
                     || (lp.getActivePool().isEmpty() && name.equals(plugin.getLotteryConfig().getDefaultPoolName()))
                     ? "&a*" : "&7 ";
             int size = plugin.getLotteryConfig().getRewardPool(name).size();
+            String statusKey;
+            switch (plugin.getLotteryConfig().getPoolStatus(name)) {
+                case "ended":
+                    statusKey = "lottery.pool.inactive";
+                    break;
+                case "upcoming":
+                    statusKey = "lottery.pool.upcoming";
+                    break;
+                default:
+                    statusKey = "";
+            }
             Text.send(player, plugin.getMessageManager().get("lottery.pool.entry",
-                    Placeholders.of("mark", mark).and("pool", name).and("count", size).build()));
+                    Placeholders.of("mark", mark).and("pool", name).and("count", size)
+                            .and("status", statusKey.isEmpty() ? "" : plugin.getMessageManager().get(statusKey)).build()));
         }
         Text.send(player, plugin.getMessageManager().get("lottery.pool.footer",
                 Placeholders.of("current",
                         lp.getActivePool().isEmpty()
                                 ? plugin.getLotteryConfig().getDefaultPoolName() : lp.getActivePool()).build()));
+    }
+
+    @Override
+    public List<String> tabComplete(CommandSender sender, String[] args) {
+        if (args.length == 1) {
+            return filter(plugin.getLotteryConfig().getPoolNames(), args[0].toLowerCase());
+        }
+        return Collections.emptyList();
     }
 }

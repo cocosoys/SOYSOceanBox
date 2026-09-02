@@ -142,6 +142,7 @@ public class LotteryManager {
         NO_PLAYERPOINTS,
         DAILY_LIMIT,
         WEEKLY_LIMIT,
+        PREREQUISITE,
         NO_POOL,
         ERROR
     }
@@ -150,6 +151,8 @@ public class LotteryManager {
         public DrawStatus status;
         public PendingReward reward;
         public long remainMillis;
+        /** 前置条件校验失败时携带所需条件对象，供指令层提示。 */
+        public LotteryConfig.Requirement requirement;
 
         DrawResult(DrawStatus status) {
             this.status = status;
@@ -168,6 +171,17 @@ public class LotteryManager {
             if (elapsed < need) {
                 DrawResult r = new DrawResult(DrawStatus.COOLDOWN);
                 r.remainMillis = need - elapsed;
+                return r;
+            }
+        }
+
+        // ---- 抽奖前置条件 ----
+        LotteryConfig.Requirement req = cfg.getDrawRequirement();
+        if (req != null) {
+            LotteryConfig.Requirement failed = checkRequirement(player, req);
+            if (failed != null) {
+                DrawResult r = new DrawResult(DrawStatus.PREREQUISITE);
+                r.requirement = failed;
                 return r;
             }
         }
@@ -215,12 +229,26 @@ public class LotteryManager {
             }
         }
 
-        // ---- 选择奖池 ----
+        // ---- 选择奖池（仅限当前生效的限时奖池）----
         String poolName = lp.getActivePool();
         if (poolName == null || poolName.isEmpty()) {
             poolName = cfg.getDefaultPoolName();
         }
-        List<RewardDef> pool = cfg.getRewardPool(poolName);
+        List<String> activePools = cfg.getActivePoolNames();
+        String effectivePool;
+        if (activePools.contains(poolName)) {
+            effectivePool = poolName;
+        } else if (activePools.contains(cfg.getDefaultPoolName())) {
+            effectivePool = cfg.getDefaultPoolName();
+        } else if (!activePools.isEmpty()) {
+            effectivePool = activePools.get(0);
+        } else {
+            effectivePool = null;
+        }
+        if (effectivePool == null) {
+            return new DrawResult(DrawStatus.NO_POOL);
+        }
+        List<RewardDef> pool = cfg.getRewardPool(effectivePool);
         if (pool.isEmpty()) {
             return new DrawResult(DrawStatus.NO_POOL);
         }
@@ -250,7 +278,17 @@ public class LotteryManager {
 
         // ---- 记账 ----
         PendingReward reward = def.createPending();
+        // 待领取奖励过期时间（TTL）：0 表示不过期
+        int expireSec = cfg.getPendingExpireSeconds();
+        if (expireSec > 0) {
+            reward.setExpireAt(System.currentTimeMillis() + expireSec * 1000L);
+        }
         lp.addPending(reward);
+        // 个人中奖记录（history.keep > 0 时记录并封顶）
+        int keep = cfg.getHistoryKeep();
+        if (keep > 0) {
+            lp.addWin(System.currentTimeMillis(), effectivePool, reward.getDisplay(), keep);
+        }
         lp.addDraw();
         lp.setLastDrawTime(System.currentTimeMillis());
         if (cfg.isDailyLimitEnabled()) {
@@ -312,6 +350,102 @@ public class LotteryManager {
         return null;
     }
 
+    // ================================================================
+    //  前置条件校验（供 draw() 调用）
+    // ================================================================
+
+    /**
+     * 校验玩家是否满足前置条件；不满足则返回所要求的条件对象，满足返回 null。
+     */
+    private LotteryConfig.Requirement checkRequirement(Player player, LotteryConfig.Requirement req) {
+        if (req.permission != null && !req.permission.isEmpty()
+                && !player.hasPermission(req.permission)) {
+            return req;
+        }
+        if (req.level > 0 && player.getLevel() < req.level) {
+            return req;
+        }
+        if (req.itemMaterial != null && !req.itemMaterial.isEmpty()) {
+            if (countMaterial(player, req.itemMaterial) < req.itemAmount) {
+                return req;
+            }
+        }
+        return null;
+    }
+
+    /** 统计玩家背包中某材质物品的总数量。 */
+    private int countMaterial(Player player, String material) {
+        Material m = Material.matchMaterial(material);
+        if (m == null) {
+            return 0;
+        }
+        int total = 0;
+        for (ItemStack it : player.getInventory().getContents()) {
+            if (it != null && it.getType() == m) {
+                total += it.getAmount();
+            }
+        }
+        return total;
+    }
+
+    // ================================================================
+    //  占位符辅助（只读，不修改玩家数据）
+    // ================================================================
+
+    /** 考虑跨日回滚后的当日已抽次数（跨日则视为 0）。 */
+    public int getDailyCountNow(LotteryPlayer lp) {
+        return LotteryMath.dailyKey().equals(lp.getDailyKey()) ? lp.getDailyCount() : 0;
+    }
+
+    /** 考虑跨周回滚后的本周已抽次数（跨周则视为 0）。 */
+    public int getWeeklyCountNow(LotteryPlayer lp) {
+        return LotteryMath.weeklyKey().equals(lp.getWeeklyKey()) ? lp.getWeeklyCount() : 0;
+    }
+
+    /**
+     * 当日剩余可抽次数；未启用每日上限时返回 -1（表示无限）。
+     */
+    public int getDailyRemaining(LotteryPlayer lp) {
+        LotteryConfig cfg = plugin.getLotteryConfig();
+        if (!cfg.isDailyLimitEnabled()) {
+            return -1;
+        }
+        return Math.max(0, cfg.getDailyLimit() - getDailyCountNow(lp));
+    }
+
+    /**
+     * 本周剩余可抽次数；未启用每周上限时返回 -1（表示无限）。
+     */
+    public int getWeeklyRemaining(LotteryPlayer lp) {
+        LotteryConfig cfg = plugin.getLotteryConfig();
+        if (!cfg.isWeeklyLimitEnabled()) {
+            return -1;
+        }
+        return Math.max(0, cfg.getWeeklyLimit() - getWeeklyCountNow(lp));
+    }
+
+    /**
+     * 距触发保底还差多少次；未启用保底时返回 -1。
+     */
+    public int getPityRemaining(LotteryPlayer lp) {
+        LotteryConfig cfg = plugin.getLotteryConfig();
+        if (!cfg.isPityEnabled()) {
+            return -1;
+        }
+        return Math.max(0, cfg.getPityAfter() - lp.getDrawsSinceBigWin());
+    }
+
+    /** 冷却剩余毫秒（无冷却或已过冷却则返回 0）。 */
+    public long getCooldownRemainingMillis(LotteryPlayer lp) {
+        int cooldown = plugin.getLotteryConfig().getCooldownSeconds();
+        if (cooldown <= 0) {
+            return 0;
+        }
+        long elapsed = System.currentTimeMillis() - lp.getLastDrawTime();
+        long need = cooldown * 1000L;
+        return Math.max(0, need - elapsed);
+    }
+
     private void broadcastBigWin(Player player, String display) {
         String msg = plugin.getMessageManager().get("lottery.broadcast.big-win",
                 new HashMap<String, String>() {{
@@ -330,7 +464,53 @@ public class LotteryManager {
     public static class ClaimResult {
         public int claimed;
         public int failed;
+        /** 本次操作清理掉的已过期奖励数量 */
+        public int expired;
         public final List<String> failures = new ArrayList<>();
+    }
+
+    /**
+     * 移除玩家已过期（TTL 失效）的待领取奖励。
+     *
+     * @return 实际清理掉的条数
+     */
+    public int pruneExpired(LotteryPlayer lp, long nowMillis) {
+        if (lp.getPending().isEmpty()) {
+            return 0;
+        }
+        int before = lp.getPending().size();
+        lp.getPending().removeIf(reward -> reward.isExpired(nowMillis));
+        return before - lp.getPending().size();
+    }
+
+    /**
+     * 将毫秒时长格式化为中文短描述，用于展示奖励剩余有效时间。
+     */
+    public static String formatRemaining(long ms) {
+        if (ms <= 0) {
+            return "0秒";
+        }
+        long s = ms / 1000;
+        long d = s / 86400;
+        s %= 86400;
+        long h = s / 3600;
+        s %= 3600;
+        long m = s / 60;
+        s %= 60;
+        StringBuilder sb = new StringBuilder();
+        if (d > 0) {
+            sb.append(d).append("天");
+        }
+        if (h > 0) {
+            sb.append(h).append("时");
+        }
+        if (m > 0) {
+            sb.append(m).append("分");
+        }
+        if (s > 0 || sb.length() == 0) {
+            sb.append(s).append("秒");
+        }
+        return sb.toString();
     }
 
     /**
@@ -341,6 +521,12 @@ public class LotteryManager {
     public ClaimResult claim(Player player, String target) {
         LotteryPlayer lp = getOrLoad(player);
         ClaimResult result = new ClaimResult();
+        // 先清理已过期奖励
+        long now = System.currentTimeMillis();
+        result.expired = pruneExpired(lp, now);
+        if (result.expired > 0) {
+            save(lp);
+        }
         if (!lp.hasPending()) {
             return result;
         }

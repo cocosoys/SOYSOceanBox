@@ -15,6 +15,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -210,6 +211,15 @@ public class YamlStorage implements DataStorage {
         for (PendingReward reward : player.getPending()) {
             reward.write(config.createSection(base + ".pending." + reward.getClaimId()));
         }
+
+        config.set(base + ".history", null);
+        if (!player.getHistory().isEmpty()) {
+            List<String> encoded = new ArrayList<>();
+            for (LotteryPlayer.WinRecord rec : player.getHistory()) {
+                encoded.add(rec.encode());
+            }
+            config.set(base + ".history", encoded);
+        }
     }
 
     private LotteryPlayer deserialize(UUID id, ConfigurationSection section) {
@@ -230,6 +240,16 @@ public class YamlStorage implements DataStorage {
                 ConfigurationSection rewardSection = pending.getConfigurationSection(key);
                 if (rewardSection != null) {
                     player.addPending(PendingReward.read(rewardSection));
+                }
+            }
+        }
+
+        List<String> history = section.getStringList("history");
+        if (history != null) {
+            for (String encoded : history) {
+                LotteryPlayer.WinRecord rec = LotteryPlayer.WinRecord.decode(encoded);
+                if (rec != null) {
+                    player.getHistory().add(rec);
                 }
             }
         }

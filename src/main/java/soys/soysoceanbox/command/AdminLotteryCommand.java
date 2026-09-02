@@ -11,10 +11,11 @@ import soys.soysoceanbox.command.sub.admin.AdminMigrateSub;
 import soys.soysoceanbox.command.sub.admin.AdminSyncSub;
 import soys.soysoceanbox.command.sub.admin.AdminSetPoolSub;
 import soys.soysoceanbox.command.sub.admin.AdminRatesSub;
+import soys.soysoceanbox.command.sub.admin.AdminRankSub;
 
 /**
  * 管理指令入口：/soceanboxadmin
- * <p>子指令：reload / give / reset / delete / storage / migrate / sync / setpool / rates。</p>
+ * <p>子指令：reload / give / reset / delete / storage / migrate / sync / setpool / rates / rank。</p>
  */
 public class AdminLotteryCommand extends CommandDispatcher {
 
@@ -29,6 +30,7 @@ public class AdminLotteryCommand extends CommandDispatcher {
         register(new AdminSyncSub(plugin));
         register(new AdminSetPoolSub(plugin));
         register(new AdminRatesSub(plugin));
+        register(new AdminRankSub(plugin));
     }
 
     @Override

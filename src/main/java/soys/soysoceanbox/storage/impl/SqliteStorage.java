@@ -77,7 +77,8 @@ public class SqliteStorage extends SqlStorage {
                         + "weekly_count INTEGER NOT NULL DEFAULT 0,"
                         + "draws_since_big_win INTEGER NOT NULL DEFAULT 0,"
                         + "active_pool TEXT NOT NULL DEFAULT '',"
-                        + "pending TEXT"
+                        + "pending TEXT,"
+                        + "history TEXT"
                         + ")",
                 "CREATE INDEX IF NOT EXISTS idx_" + tablePrefix + "players_name"
                         + " ON " + playersTable() + " (name)",
@@ -96,6 +97,7 @@ public class SqliteStorage extends SqlStorage {
                 "ALTER TABLE " + t + " ADD COLUMN weekly_count INTEGER NOT NULL DEFAULT 0",
                 "ALTER TABLE " + t + " ADD COLUMN draws_since_big_win INTEGER NOT NULL DEFAULT 0",
                 "ALTER TABLE " + t + " ADD COLUMN active_pool TEXT NOT NULL DEFAULT ''",
+                "ALTER TABLE " + t + " ADD COLUMN history TEXT",
                 // 二级索引：提升按奖池筛选/统计的查询性能；索引已存在时忽略
                 "CREATE INDEX IF NOT EXISTS idx_" + tablePrefix + "players_active_pool ON " + t + " (active_pool)"
         };

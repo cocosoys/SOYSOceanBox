@@ -25,7 +25,7 @@ public class LotteryConfig {
     private FileConfiguration config;
 
     /** lottery.yml 当前期望的 config-version，升级时合并到此版本。 */
-    private static final int EXPECTED_VERSION = 2;
+    private static final int EXPECTED_VERSION = 4;
 
     public LotteryConfig(SOYSOceanBox plugin) {
         this.plugin = plugin;
@@ -106,6 +106,30 @@ public class LotteryConfig {
     /** 触发全服广播所需的最高权重，0 = 不按权重筛选（即所有中奖都广播） */
     public int getBroadcastBelowWeight() {
         return config.getInt("broadcast-below-weight", 0);
+    }
+
+    // ================================================================
+    //  待领取奖励过期（TTL）
+    // ================================================================
+
+    /**
+     * 待领取奖励的过期时间（秒），0 = 永不过期。
+     * 抽奖瞬间按「当前时间 + 该秒数」固化到每条奖励上；过期的奖励在
+     * claim / list 时自动清理并落盘。
+     */
+    public int getPendingExpireSeconds() {
+        return Math.max(0, config.getInt("pending.expire-after", 0));
+    }
+
+    // ================================================================
+    //  个人中奖记录
+    // ================================================================
+
+    /**
+     * 个人中奖记录保留条数（仅保留最近 N 条），0 = 不记录以节省空间。
+     */
+    public int getHistoryKeep() {
+        return Math.max(0, config.getInt("history.keep", 50));
     }
 
     // ================================================================
@@ -257,6 +281,147 @@ public class LotteryConfig {
         public PityEntry(String id, int weight) {
             this.id = id;
             this.weight = Math.max(1, weight);
+        }
+    }
+
+    // ================================================================
+    //  抽奖前置条件（require）
+    // ================================================================
+
+    /**
+     * 解析全局抽奖前置条件。
+     * <p>当 permission / level / item 全部为空或 0 时视为「无限制」，返回 null。</p>
+     */
+    public Requirement getDrawRequirement() {
+        ConfigurationSection sec = config.getConfigurationSection("require");
+        if (sec == null) {
+            return null;
+        }
+        String perm = sec.getString("permission", "");
+        int level = sec.getInt("level", 0);
+        String mat = sec.getString("item.material", "");
+        int amt = Math.max(1, sec.getInt("item.amount", 1));
+        boolean hasPerm = perm != null && !perm.isEmpty();
+        boolean hasLevel = level > 0;
+        boolean hasItem = mat != null && !mat.isEmpty();
+        if (!hasPerm && !hasLevel && !hasItem) {
+            return null;
+        }
+        return new Requirement(hasPerm ? perm : "", level, hasItem ? mat : "", amt);
+    }
+
+    /**
+     * 抽奖前置条件：需持有某权限、需达到指定经验等级、需在背包中持有指定物品。
+     * 任意一项不满足即禁止抽奖。
+     */
+    public static class Requirement {
+        public final String permission;
+        public final int level;
+        public final String itemMaterial;
+        public final int itemAmount;
+
+        public Requirement(String permission, int level, String itemMaterial, int itemAmount) {
+            this.permission = permission == null ? "" : permission;
+            this.level = level;
+            this.itemMaterial = itemMaterial == null ? "" : itemMaterial;
+            this.itemAmount = itemAmount;
+        }
+
+        /** 将条件拼接为可读文本，用于向玩家提示缺失项。 */
+        public String describe() {
+            java.util.List<String> parts = new java.util.ArrayList<>();
+            if (permission != null && !permission.isEmpty()) {
+                parts.add("权限 " + permission);
+            }
+            if (level > 0) {
+                parts.add("等级 " + level);
+            }
+            if (itemMaterial != null && !itemMaterial.isEmpty()) {
+                parts.add(itemMaterial + " x" + itemAmount);
+            }
+            return String.join(" / ", parts);
+        }
+    }
+
+    // ================================================================
+    //  限时 / 节日奖池
+    // ================================================================
+
+    /**
+     * 判断指定奖池在给定时刻是否处于生效窗口内。
+     * 未配置 start/end 的奖池视为常驻（始终生效）。
+     */
+    public boolean isPoolActive(String name, long nowMillis) {
+        ConfigurationSection sec = config.getConfigurationSection("pools." + name);
+        if (sec == null) {
+            return false;
+        }
+        String start = sec.getString("start", "");
+        String end = sec.getString("end", "");
+        if ((start == null || start.isEmpty()) && (end == null || end.isEmpty())) {
+            return true;
+        }
+        long startMs = parseWindow(start);
+        long endMs = parseWindow(end);
+        if (startMs > 0 && nowMillis < startMs) {
+            return false;
+        }
+        if (endMs > 0 && nowMillis > endMs) {
+            return false;
+        }
+        return true;
+    }
+
+    /** 当前生效（未被限时窗口排除）的全部奖池名称。 */
+    public List<String> getActivePoolNames() {
+        long now = System.currentTimeMillis();
+        List<String> result = new ArrayList<>();
+        for (String name : getPoolNames()) {
+            if (isPoolActive(name, now)) {
+                result.add(name);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * 奖池限时状态：active（生效中）/ ended（已结束）/ upcoming（未开始）。
+     * 未配置时间窗口的奖池恒为 active。
+     */
+    public String getPoolStatus(String name) {
+        ConfigurationSection sec = config.getConfigurationSection("pools." + name);
+        if (sec == null) {
+            return "active";
+        }
+        String start = sec.getString("start", "");
+        String end = sec.getString("end", "");
+        if ((start == null || start.isEmpty()) && (end == null || end.isEmpty())) {
+            return "active";
+        }
+        long now = System.currentTimeMillis();
+        long startMs = parseWindow(start);
+        long endMs = parseWindow(end);
+        if (endMs > 0 && now > endMs) {
+            return "ended";
+        }
+        if (startMs > 0 && now < startMs) {
+            return "upcoming";
+        }
+        return "active";
+    }
+
+    /** 解析 yyyy-MM-dd HH:mm 时间窗口；解析失败返回 -1（视为不限制该端点）。 */
+    private long parseWindow(String s) {
+        if (s == null || s.isEmpty()) {
+            return -1;
+        }
+        try {
+            java.text.SimpleDateFormat fmt = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm");
+            fmt.setLenient(false);
+            return fmt.parse(s.trim()).getTime();
+        } catch (Exception e) {
+            plugin.getLogger().warning("[lottery.yml] 限时奖池时间解析失败: " + s);
+            return -1;
         }
     }
 

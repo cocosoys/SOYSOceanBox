@@ -104,6 +104,11 @@ public class ConfigManager {
         return config.getBoolean("storage.mirror.sync-on-startup", false);
     }
 
+    /** 是否启用跨服数据同步（多实例共享同一 MySQL 主库）。 */
+    public boolean isCrossServer() {
+        return config.getBoolean("storage.cross-server", false);
+    }
+
     // ================================================================
     //  指令
     // ================================================================

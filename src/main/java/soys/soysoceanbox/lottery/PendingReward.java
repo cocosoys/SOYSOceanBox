@@ -28,6 +28,9 @@ public class PendingReward {
     private Type type;
     private String display;
 
+    /** 过期时间戳（毫秒），0 = 永不过期（仍可由配置决定）。 */
+    private long expireAt;
+
     // money / points
     private double value;
 
@@ -56,6 +59,22 @@ public class PendingReward {
 
     public void setClaimId(UUID claimId) {
         this.claimId = claimId;
+    }
+
+    public long getExpireAt() {
+        return expireAt;
+    }
+
+    public void setExpireAt(long expireAt) {
+        this.expireAt = expireAt;
+    }
+
+    /**
+     * 判断奖励是否已过期（在给定时刻失效）。
+     * expireAt 为 0 表示永不过期。
+     */
+    public boolean isExpired(long nowMillis) {
+        return expireAt > 0 && nowMillis >= expireAt;
     }
 
     public Type getType() {
@@ -160,6 +179,7 @@ public class PendingReward {
 
     public void write(ConfigurationSection section) {
         section.set("claim-id", claimId.toString());
+        section.set("expire-at", expireAt);
         section.set("type", type.name());
         section.set("display", display);
         section.set("value", value);
@@ -191,6 +211,7 @@ public class PendingReward {
                 // 无效 id 时保留随机生成的
             }
         }
+        reward.expireAt = section.getLong("expire-at", 0);
         try {
             reward.type = Type.valueOf(section.getString("type", "MONEY"));
         } catch (IllegalArgumentException e) {

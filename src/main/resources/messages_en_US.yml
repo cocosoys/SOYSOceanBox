@@ -34,6 +34,7 @@ lottery:
     no-playerpoints: '{prefix}&cThe lottery system has no PlayerPoints loaded, point draws are unavailable, please contact an admin.'
     daily-limit: '{prefix}&cYou have reached the daily draw limit (&f{limit}&c), please try again in about &f{seconds} &cseconds.'
     weekly-limit: '{prefix}&cYou have reached the weekly draw limit (&f{limit}&c).'
+    prerequisite: '{prefix}&cYou do not meet the draw requirements: &f{require}'
 
   # ---------- Claim ----------
   claim:
@@ -41,12 +42,13 @@ lottery:
     success: '{prefix}&aSuccessfully claimed &f{count} &areward(s)!'
     partial-failed: '{prefix}&cFailed to grant &f{count} &creward(s): &f{items}'
     given: '{prefix}&aAn admin granted you a reward: &f{reward}&a, use &f/soceanbox claim &a to claim it.'
+    expired: '{prefix}&7&f{count} &7reward(s) expired and were automatically cleared.'
 
   # ---------- Pending list ----------
   list:
     empty: '{prefix}&7You have no pending rewards.'
     header: '&8&m---------&r &dPending Rewards &8&m---------'
-    entry: '&8 • &f{index}. {reward}'
+    entry: '&8 • &f{index}. {reward}{expire}'
     footer: '&8&m------------------------------&r &7Total: &f{count}'
 
   # ---------- Server-wide big win broadcast ----------
@@ -59,8 +61,29 @@ lottery:
     unknown: '{prefix}&cUnknown pool &f{pool}&c, available: &f{pools}'
     switched: '{prefix}&aSwitched to pool &f{pool}&a.'
     header: '&8&m---------&r &dAvailable Pools &8&m---------'
-    entry: '&8 {mark} &f{pool} &7(&f{count}&7 items)'
+    entry: '&8 {mark} &f{pool} &7(&f{count}&7 items){status}'
+    inactive: '&c (ended)'
+    upcoming: '&e (upcoming)'
     footer: '&8&m------------------------------&r &7Current pool: &f{current}'
+
+  # ---------- Personal stats ----------
+  stats:
+    header: '&8&m---------&r &dMy Lottery Profile &8&m---------'
+    total: '&8 • &7Total draws: &f{total}'
+    daily: '&8 • &7Drawn today: &f{daily} &7(remaining &f{daily_left}&7)'
+    weekly: '&8 • &7Drawn this week: &f{weekly} &7(remaining &f{weekly_left}&7)'
+    pity: '&8 • &7Draws until pity: &f{pity}'
+    cooldown: '&8 • &7Draw cooldown left: &f{cooldown}'
+    pending: '&8 • &7Pending rewards: &f{pending}'
+    history: '&8 • &7Win records: &f{history}'
+    footer: '&8&m------------------------------'
+
+  # ---------- Win history ----------
+  history:
+    empty: '{prefix}&7You have no win records yet.'
+    header: '&8&m---------&r &dWin History &8&m---------'
+    entry: '&8 #&f{index} &7[{time}] &f{reward} &7(&f{pool}&7)'
+    footer: '&8&m------------------------------&r &7Total: &f{count}'
 
 # ============================================================================
 #  Help
@@ -72,6 +95,8 @@ help:
     - '&8 • &f/{label} claim [all|index] &7- claim rewards (default: all)'
     - '&8 • &f/{label} list &7- view pending rewards'
     - '&8 • &f/{label} pool [name] &7- view/switch pool'
+    - '&8 • &f/{label} stats &7- view personal lottery profile'
+    - '&8 • &f/{label} history [count] &7- view win history'
     - '&8 • &f/{label} help &7- show this help'
     - '&8&m------------------------------'
   admin:
@@ -85,6 +110,7 @@ help:
     - '&8 • &f/{label} sync &7- sync primary storage to secondary'
     - '&8 • &f/{label} setpool <player> <pool> &7- assign a pool to a player'
     - '&8 • &f/{label} rates [pool] [samples] &7- simulate hit rates (debug)'
+    - '&8 • &f/{label} rank [daily|weekly|all] [count] &7- view lottery ranking'
     - '&8&m------------------------------'
 
 # ============================================================================
@@ -126,6 +152,12 @@ admin:
     usage: '{prefix}&cUsage: /{label} setpool <player> <pool>'
     unknown: '{prefix}&cUnknown pool &f{pool}&c, available: &f{pools}'
     success: '{prefix}&aAssigned pool &f{pool} &a to &f{player}&a.'
+  rank:
+    usage: '{prefix}&cUsage: /{label} rank [daily|weekly|all] [count]'
+    header: '&8&m---------&r &cLottery Ranking &8&m---------'
+    entry: '&8 #&f{rank} &7{player} &7- &f{value} &7draws'
+    footer: '&8&m------------------------------&r &7scope: &f{scope} &7| &f{count} &7players'
+    empty: '{prefix}&7No ranking data yet.'
   rates:
     usage: '{prefix}&cUsage: /{label} rates [pool] [samples]'
     unknown-pool: '{prefix}&cUnknown pool &f{pool}&c, available: &f{pools}'

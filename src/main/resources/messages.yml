@@ -36,12 +36,13 @@ lottery:
     empty: '{prefix}&7你当前没有待领取的奖励。'
     success: '{prefix}&a成功领取 &f{count} &a个奖励！'
     partial-failed: '{prefix}&c有 &f{count} &c个奖励发放失败: &f{items}'
+    expired: '{prefix}&7有 &f{count} &7个奖励已过期失效，已自动清理。'
 
   # ---------- 待领取列表 ----------
   list:
     empty: '{prefix}&7你当前没有待领取的奖励。'
     header: '&8&m---------&r &d待领取奖励 &8&m---------'
-    entry: '&8 • &f{index}. {reward}'
+    entry: '&8 • &f{index}. {reward}{expire}'
     footer: '&8&m------------------------------&r &7共 &f{count} &7个'
 
   # ---------- 全服广播大额中奖 ----------
@@ -54,6 +55,7 @@ lottery:
     no-playerpoints: '{prefix}&c抽奖系统未加载 PlayerPoints，无法使用点券抽奖，请联系管理员。'
     daily-limit: '{prefix}&c你今日抽奖次数已达上限（&f{limit}&c 次），请于约 &f{seconds} &c秒后重试。'
     weekly-limit: '{prefix}&c你本周抽奖次数已达上限（&f{limit}&c 次）。'
+    prerequisite: '{prefix}&c不满足抽奖条件，需满足: &f{require}'
 
   # ---------- 奖池 ----------
   pool:
@@ -61,12 +63,33 @@ lottery:
     unknown: '{prefix}&c未知奖池 &f{pool}&c，可用: &f{pools}'
     switched: '{prefix}&a已切换到奖池 &f{pool}&a。'
     header: '&8&m---------&r &d可用奖池 &8&m---------'
-    entry: '&8 {mark} &f{pool} &7(&f{count}&7 项)'
+    entry: '&8 {mark} &f{pool} &7(&f{count}&7 项){status}'
+    inactive: '&c (已结束)'
+    upcoming: '&e (未开始)'
     footer: '&8&m------------------------------&r &7当前奖池: &f{current}'
 
   # ---------- 被管理员发放 ----------
   claim:
     given: '{prefix}&a管理员向你发放了奖励: &f{reward}&a，使用 &f/soceanbox claim &a领取。'
+
+  # ---------- 个人档案 ----------
+  stats:
+    header: '&8&m---------&r &d我的抽奖档案 &8&m---------'
+    total: '&8 • &7总抽奖次数: &f{total}'
+    daily: '&8 • &7今日已抽: &f{daily} &7(剩余 &f{daily_left}&7)'
+    weekly: '&8 • &7本周已抽: &f{weekly} &7(剩余 &f{weekly_left}&7)'
+    pity: '&8 • &7距保底还需: &f{pity} &7次'
+    cooldown: '&8 • &7抽奖冷却剩余: &f{cooldown}'
+    pending: '&8 • &7待领取奖励: &f{pending} &7个'
+    history: '&8 • &7中奖记录: &f{history} &7条'
+    footer: '&8&m------------------------------'
+
+  # ---------- 中奖记录 ----------
+  history:
+    empty: '{prefix}&7你还没有任何中奖记录。'
+    header: '&8&m---------&r &d中奖记录 &8&m---------'
+    entry: '&8 #&f{index} &7[{time}] &f{reward} &7(&f{pool}&7)'
+    footer: '&8&m------------------------------&r &7共 &f{count} &7条'
 
 # ============================================================================
 #  帮助
@@ -78,6 +101,8 @@ help:
     - '&8 • &f/{label} claim [all|序号] &7- 领取奖励（默认领取全部）'
     - '&8 • &f/{label} list &7- 查看待领取奖励'
     - '&8 • &f/{label} pool [名称] &7- 查看/切换奖池'
+    - '&8 • &f/{label} stats &7- 查看个人抽奖档案'
+    - '&8 • &f/{label} history [数量] &7- 查看中奖记录'
     - '&8 • &f/{label} help &7- 显示本帮助'
     - '&8&m------------------------------'
   admin:
@@ -91,6 +116,7 @@ help:
     - '&8 • &f/{label} sync &7- 同步主存储到辅助存储'
     - '&8 • &f/{label} setpool <玩家> <奖池> &7- 为玩家指定奖池'
     - '&8 • &f/{label} rates [奖池] [样本数] &7- 模拟各奖命中率（调试）'
+    - '&8 • &f/{label} rank [daily|weekly|all] [数量] &7- 查看抽奖排行榜'
     - '&8&m------------------------------'
 
 # ============================================================================
@@ -132,6 +158,12 @@ admin:
     usage: '{prefix}&c用法: /{label} setpool <玩家> <奖池名>'
     unknown: '{prefix}&c未知奖池 &f{pool}&c，可用: &f{pools}'
     success: '{prefix}&a已为 &f{player} &a指定奖池 &f{pool}&a。'
+  rank:
+    usage: '{prefix}&c用法: /{label} rank [daily|weekly|all] [数量]'
+    header: '&8&m---------&r &c抽奖排行榜 &8&m---------'
+    entry: '&8 #&f{rank} &7{player} &7- &f{value} &7次'
+    footer: '&8&m------------------------------&r &7范围: &f{scope} &7| 共 &f{count} &7名'
+    empty: '{prefix}&7暂无排行榜数据。'
   rates:
     usage: '{prefix}&c用法: /{label} rates [奖池名] [样本数]'
     unknown-pool: '{prefix}&c未知奖池 &f{pool}&c，可用: &f{pools}'

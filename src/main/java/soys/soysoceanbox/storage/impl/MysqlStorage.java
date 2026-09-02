@@ -105,6 +105,7 @@ public class MysqlStorage extends SqlStorage {
                         + "draws_since_big_win INT NOT NULL DEFAULT 0,"
                         + "active_pool VARCHAR(64) NOT NULL DEFAULT '',"
                         + "pending TEXT,"
+                        + "history TEXT,"
                         + "PRIMARY KEY (uuid),"           // uuid 即聚簇索引，按 uuid 查找天然高效
                         + "INDEX idx_name (name),"         // 按名检索（统计/排查）
                         + "INDEX idx_active_pool (active_pool)" // 按奖池筛选/统计（大数据量性能）
@@ -122,6 +123,7 @@ public class MysqlStorage extends SqlStorage {
                 "ALTER TABLE " + t + " ADD COLUMN weekly_count INT NOT NULL DEFAULT 0",
                 "ALTER TABLE " + t + " ADD COLUMN draws_since_big_win INT NOT NULL DEFAULT 0",
                 "ALTER TABLE " + t + " ADD COLUMN active_pool VARCHAR(64) NOT NULL DEFAULT ''",
+                "ALTER TABLE " + t + " ADD COLUMN history TEXT",
                 // 二级索引：提升按奖池筛选/统计的查询性能；索引已存在时忽略错误
                 "CREATE INDEX idx_active_pool ON " + t + " (active_pool)"
         };

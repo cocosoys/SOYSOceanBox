@@ -101,6 +101,15 @@ public class StorageManager {
             secondaries.add(sorted.get(i));
         }
 
+        // 跨服数据同步前置校验：开启跨服但主存储并非 MySQL，则多实例无法共享数据
+        if (plugin.getConfigManager().isCrossServer()
+                && primary.getType() != StorageType.MYSQL) {
+            plugin.getLogger().warning(
+                    "已启用跨服数据同步（storage.cross-server: true），但主存储并非 MySQL，"
+                            + "多实例将无法共享抽奖数据！请在所有实例的 config.yml 中将 "
+                            + "storage.backends.mysql.enabled 设为 true 并指向同一数据库。");
+        }
+
         plugin.getLogger().info("主存储: " + primary.getType().getDisplayName()
                 + (secondaries.isEmpty() ? "，无辅助存储" : "，辅助存储: " + describeSecondaries()));
 

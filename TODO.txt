@@ -63,6 +63,7 @@ Spigot 1.12.2 抽奖插件（玩家指令抽奖 → 产出待领取奖励 → �
 【质量校验】
 [x] 三份 YAML 经 pyyaml 解析通过
 [x] 58 个被引用 message key 全部存在，无缺失（2026-08-12 复核：83 个键、Java 引用 63 个、0 缺失；en_US 83 键 0 孤儿）
+[x] 2026-08-11 复核扩展功能：messages.yml 92 键、Java 引用 69 个、0 缺失；en_US 92 键 0 孤儿（Node 校验脚本）
 [x] 源码无残留 /lottery 功能引用（仅保留别名 chou/抽奖）
 [x] 新增单元测试 ConfigUpgraderTest（配置合并/升级逻辑，纯逻辑无需服务器）
 
@@ -93,11 +94,11 @@ Spigot 1.12.2 抽奖插件（玩家指令抽奖 → 产出待领取奖励 → �
 [x] 数据库索引优化: SQL 存储新增 active_pool 二级索引（MySQL/Sqlite，含容忍式迁移）；uuid 为主键聚簇索引已天然高效
 
 【扩展功能（可选）】
-[ ] 排行榜（服务端/周榜，结合每日/每周上限）
-[ ] 节日/限时奖池（按时间自动启停）
-[ ] 抽奖条件前置（如需特定权限/等级/道具才能抽）
-[ ] Placeholder 变量扩展（%soysoceanbox_daily_left% 等）
-[ ] 跨服数据同步（多实例共享主库）
+[x] 排行榜：/soceanboxadmin rank [daily|weekly|all] [数量]，遍历主存储排序；lottery.leaderboard.* 键 + 权限 soysoceanbox.admin.rank
+[x] 节日/限时奖池：lottery.yml 各奖池支持 start/end（yyyy-MM-dd HH:mm）；draw() 仅抽生效奖池，PoolSub 标记已结束/未开始；getActivePoolNames/getPoolStatus
+[x] 抽奖条件前置：lottery.yml require 块（permission / level / item）；draw() 校验，DrawStatus.PREREQUISITE + lottery.draw.prerequisite（向后兼容：区块缺省=无限制；config-version 升至 3 自动合并）
+[x] Placeholder 变量扩展：新增 daily_left / weekly_left / daily_count / weekly_count / active_pool / pity_left / cooldown_left / cooldown_left_ms（无限时返回 ∞）；刷新 Javadoc 与 config.yml 文档
+[x] 跨服数据同步：config.yml storage.cross-server 开关；多实例指向同一 MySQL 主库即共享；ConfigManager.isCrossServer() + StorageManager 主库非 MySQL 时告警；config-version 升至 2 自动合并
 
 【测试增强】
 [ ] 集成测试（借助 mock 或测试服框架跑 draw/claim 全流程）
