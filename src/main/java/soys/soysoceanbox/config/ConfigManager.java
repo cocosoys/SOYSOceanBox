@@ -21,7 +21,7 @@ public class ConfigManager {
     private FileConfiguration config;
 
     /** config.yml 当前期望的 config-version，升级时合并到此版本。 */
-    private static final int EXPECTED_VERSION = 1;
+    private static final int EXPECTED_VERSION = 2;
 
     public ConfigManager(SOYSOceanBox plugin) {
         this.plugin = plugin;

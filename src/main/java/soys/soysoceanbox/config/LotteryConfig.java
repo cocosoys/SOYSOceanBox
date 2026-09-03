@@ -12,7 +12,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * 抽奖核心规则配置（lottery.yml）访问器。
@@ -25,7 +29,7 @@ public class LotteryConfig {
     private FileConfiguration config;
 
     /** lottery.yml 当前期望的 config-version，升级时合并到此版本。 */
-    private static final int EXPECTED_VERSION = 4;
+    private static final int EXPECTED_VERSION = 5;
 
     public LotteryConfig(SOYSOceanBox plugin) {
         this.plugin = plugin;
@@ -434,5 +438,83 @@ public class LotteryConfig {
      */
     public RewardDef rollReward(List<RewardDef> pool) {
         return LotteryMath.roll(pool, new Random());
+    }
+
+    // ================================================================
+    //  音效与动画效果
+    // ================================================================
+
+    /**
+     * 抽奖/领取/大额中奖的音效、粒子、标题效果配置。
+     */
+    public static class EffectConfig {
+        // 抽奖成功
+        public String drawSound = "ENTITY_EXPERIENCE_ORB_PICKUP";
+        public float drawSoundVolume = 1.0f;
+        public float drawSoundPitch = 1.0f;
+        public boolean drawParticlesEnabled = true;
+        public String drawParticleType = "VILLAGER_HAPPY";
+        public int drawParticleCount = 15;
+        public double drawParticleOffsetX = 0.5;
+        public double drawParticleOffsetY = 1.0;
+        public double drawParticleOffsetZ = 0.5;
+        public double drawParticleExtra = 0.1;
+
+        // 领取成功
+        public String claimSound = "ENTITY_ITEM_PICKUP";
+        public float claimSoundVolume = 1.0f;
+        public float claimSoundPitch = 1.2f;
+
+        // 大额中奖（触发广播时）
+        public boolean bigWinTitleEnabled = true;
+        public String bigWinTitle = "&6&l恭喜中奖！";
+        public String bigWinSubtitle = "&e获得 {reward}";
+        public int bigWinFadeIn = 10;
+        public int bigWinStay = 40;
+        public int bigWinFadeOut = 10;
+        public String bigWinSound = "ENTITY_ENDERDRAGON_GROWL";
+        public float bigWinSoundVolume = 1.0f;
+        public float bigWinSoundPitch = 0.8f;
+    }
+
+    /**
+     * 读取音效与动画效果配置；配置缺失时返回默认值。
+     */
+    public EffectConfig getEffects() {
+        EffectConfig cfg = new EffectConfig();
+        ConfigurationSection effects = config.getConfigurationSection("effects");
+        if (effects == null) {
+            return cfg;
+        }
+
+        // 抽奖
+        cfg.drawSound = effects.getString("draw.sound", cfg.drawSound);
+        cfg.drawSoundVolume = (float) effects.getDouble("draw.volume", cfg.drawSoundVolume);
+        cfg.drawSoundPitch = (float) effects.getDouble("draw.pitch", cfg.drawSoundPitch);
+        cfg.drawParticlesEnabled = effects.getBoolean("draw.particles.enabled", cfg.drawParticlesEnabled);
+        cfg.drawParticleType = effects.getString("draw.particles.type", cfg.drawParticleType);
+        cfg.drawParticleCount = effects.getInt("draw.particles.count", cfg.drawParticleCount);
+        cfg.drawParticleOffsetX = effects.getDouble("draw.particles.offset-x", cfg.drawParticleOffsetX);
+        cfg.drawParticleOffsetY = effects.getDouble("draw.particles.offset-y", cfg.drawParticleOffsetY);
+        cfg.drawParticleOffsetZ = effects.getDouble("draw.particles.offset-z", cfg.drawParticleOffsetZ);
+        cfg.drawParticleExtra = effects.getDouble("draw.particles.extra", cfg.drawParticleExtra);
+
+        // 领取
+        cfg.claimSound = effects.getString("claim.sound", cfg.claimSound);
+        cfg.claimSoundVolume = (float) effects.getDouble("claim.volume", cfg.claimSoundVolume);
+        cfg.claimSoundPitch = (float) effects.getDouble("claim.pitch", cfg.claimSoundPitch);
+
+        // 大额中奖
+        cfg.bigWinTitleEnabled = effects.getBoolean("big-win.title-enabled", cfg.bigWinTitleEnabled);
+        cfg.bigWinTitle = effects.getString("big-win.title", cfg.bigWinTitle);
+        cfg.bigWinSubtitle = effects.getString("big-win.subtitle", cfg.bigWinSubtitle);
+        cfg.bigWinFadeIn = effects.getInt("big-win.fade-in", cfg.bigWinFadeIn);
+        cfg.bigWinStay = effects.getInt("big-win.stay", cfg.bigWinStay);
+        cfg.bigWinFadeOut = effects.getInt("big-win.fade-out", cfg.bigWinFadeOut);
+        cfg.bigWinSound = effects.getString("big-win.sound", cfg.bigWinSound);
+        cfg.bigWinSoundVolume = (float) effects.getDouble("big-win.volume", cfg.bigWinSoundVolume);
+        cfg.bigWinSoundPitch = (float) effects.getDouble("big-win.pitch", cfg.bigWinSoundPitch);
+
+        return cfg;
     }
 }

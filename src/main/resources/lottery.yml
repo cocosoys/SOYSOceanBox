@@ -8,7 +8,7 @@
 # ============================================================================
 
 # 配置文件版本，用于自动升级检测，请勿手动修改
-config-version: 4
+config-version: 5
 
 
 # ============================================================================
@@ -100,6 +100,52 @@ require:
   item:
     material: ''
     amount: 1
+
+# ============================================================
+#  音效与动画效果
+# ------------------------------------------------------------
+#  抽奖/领取时的音效、粒子、标题等视觉反馈，提升体验。
+#  音效名称使用 Spigot 1.12.2 的 Sound 枚举名，留空表示不播放。
+#  粒子名称使用 Particle 枚举名。
+# ============================================================
+effects:
+
+  # ---------- 抽奖成功 ----------
+  draw:
+    # 抽奖成功时播放的音效（如 ENTITY_EXPERIENCE_ORB_PICKUP），留空关闭
+    sound: 'ENTITY_EXPERIENCE_ORB_PICKUP'
+    volume: 1.0
+    pitch: 1.0
+    # 抽奖成功时在玩家位置播放的粒子效果，enabled=false 关闭
+    particles:
+      enabled: true
+      type: 'VILLAGER_HAPPY'
+      count: 15
+      offset-x: 0.5
+      offset-y: 1.0
+      offset-z: 0.5
+      extra: 0.1
+
+  # ---------- 领取成功 ----------
+  claim:
+    # 领取成功时播放的音效（如 ENTITY_ITEM_PICKUP），留空关闭
+    sound: 'ENTITY_ITEM_PICKUP'
+    volume: 1.0
+    pitch: 1.2
+
+  # ---------- 大额中奖（触发广播时）标题消息 ----------
+  big-win:
+    title-enabled: true
+    title: '&6&l恭喜中奖！'
+    subtitle: '&e获得 {reward}'
+    # 标题淡入/停留/淡出时间（游戏刻，20刻=1秒）
+    fade-in: 10
+    stay: 40
+    fade-out: 10
+    # 大额中奖时额外播放的音效（留空则使用 draw.sound）
+    sound: 'ENTITY_ENDERDRAGON_GROWL'
+    volume: 1.0
+    pitch: 0.8
 
 # ============================================================
 #  多奖池

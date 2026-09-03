@@ -308,11 +308,15 @@ public class LotteryManager {
 
         save(lp);
 
-        // ---- 全服广播大额中奖 ----
+        // ---- 抽奖成功音效与粒子 ----
+        playDrawEffects(player);
+
+        // ---- 全服广播大额中奖（含标题与专属音效）----
         if (cfg.isBroadcastBigWin()) {
             int below = cfg.getBroadcastBelowWeight();
             if (below <= 0 || def.getWeight() <= below) {
                 broadcastBigWin(player, reward.getDisplay());
+                playBigWinEffects(player, reward.getDisplay());
             }
         }
 
@@ -458,6 +462,90 @@ public class LotteryManager {
     }
 
     // ================================================================
+    //  音效与动画效果
+    // ================================================================
+
+    /**
+     * 播放抽奖成功的音效与粒子效果。
+     */
+    private void playDrawEffects(Player player) {
+        LotteryConfig.EffectConfig cfg = plugin.getLotteryConfig().getEffects();
+        // 音效
+        playSoundSafe(player, cfg.drawSound, cfg.drawSoundVolume, cfg.drawSoundPitch);
+        // 粒子
+        if (cfg.drawParticlesEnabled) {
+            spawnParticlesSafe(player, cfg.drawParticleType, cfg.drawParticleCount,
+                    cfg.drawParticleOffsetX, cfg.drawParticleOffsetY, cfg.drawParticleOffsetZ,
+                    cfg.drawParticleExtra);
+        }
+    }
+
+    /**
+     * 播放领取成功的音效。
+     */
+    private void playClaimEffects(Player player) {
+        LotteryConfig.EffectConfig cfg = plugin.getLotteryConfig().getEffects();
+        playSoundSafe(player, cfg.claimSound, cfg.claimSoundVolume, cfg.claimSoundPitch);
+    }
+
+    /**
+     * 播放大额中奖的标题消息与专属音效（触发广播时调用）。
+     */
+    private void playBigWinEffects(Player player, String rewardDisplay) {
+        LotteryConfig.EffectConfig cfg = plugin.getLotteryConfig().getEffects();
+        // 标题消息
+        if (cfg.bigWinTitleEnabled) {
+            String title = Text.color(cfg.bigWinTitle);
+            String subtitle = Text.color(cfg.bigWinSubtitle.replace("{reward}", rewardDisplay));
+            try {
+                player.sendTitle(title, subtitle, cfg.bigWinFadeIn, cfg.bigWinStay, cfg.bigWinFadeOut);
+            } catch (Throwable ignored) {
+                // 低版本服务端不支持 sendTitle 时忽略
+            }
+        }
+        // 专属音效（配置了则使用，否则回退到抽奖音效）
+        String sound = (cfg.bigWinSound != null && !cfg.bigWinSound.isEmpty())
+                ? cfg.bigWinSound : cfg.drawSound;
+        playSoundSafe(player, sound, cfg.bigWinSoundVolume, cfg.bigWinSoundPitch);
+    }
+
+    /**
+     * 安全播放音效：音效名无效或播放失败时静默忽略，不影响主流程。
+     */
+    private void playSoundSafe(Player player, String soundName, float volume, float pitch) {
+        if (soundName == null || soundName.isEmpty()) {
+            return;
+        }
+        try {
+            org.bukkit.Sound sound = org.bukkit.Sound.valueOf(soundName);
+            player.playSound(player.getLocation(), sound, volume, pitch);
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().warning("[效果] 音效名称无效: " + soundName);
+        } catch (Throwable ignored) {
+            // 播放失败静默忽略
+        }
+    }
+
+    /**
+     * 安全生成粒子效果：粒子名无效或生成失败时静默忽略。
+     */
+    private void spawnParticlesSafe(Player player, String particleName, int count,
+                                     double offsetX, double offsetY, double offsetZ, double extra) {
+        if (particleName == null || particleName.isEmpty()) {
+            return;
+        }
+        try {
+            org.bukkit.Particle particle = org.bukkit.Particle.valueOf(particleName);
+            player.spawnParticle(particle, player.getLocation().add(0, 1, 0),
+                    count, offsetX, offsetY, offsetZ, extra);
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().warning("[效果] 粒子名称无效: " + particleName);
+        } catch (Throwable ignored) {
+            // 生成失败静默忽略
+        }
+    }
+
+    // ================================================================
     //  领取
     // ================================================================
 
@@ -563,6 +651,10 @@ public class LotteryManager {
         }
         if (result.claimed > 0 || result.partial > 0) {
             save(lp);
+        }
+        // 领取成功音效
+        if (result.claimed > 0) {
+            playClaimEffects(player);
         }
         return result;
     }

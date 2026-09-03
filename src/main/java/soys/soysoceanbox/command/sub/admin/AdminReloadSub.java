@@ -44,7 +44,7 @@ public class AdminReloadSub extends SubCommand {
             msg(sender, "admin.reload.success", Placeholders.of("ms", ms).build());
         } catch (Exception e) {
             plugin.getLogger().severe("重载失败: " + e.getMessage());
-            e.printStackTrace();
+            plugin.getLogger().severe("详细堆栈: " + java.util.Arrays.toString(e.getStackTrace()));
             msg(sender, "admin.reload.failed", null);
         }
     }
