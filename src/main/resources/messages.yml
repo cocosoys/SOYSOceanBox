@@ -36,6 +36,7 @@ lottery:
     empty: '{prefix}&7你当前没有待领取的奖励。'
     success: '{prefix}&a成功领取 &f{count} &a个奖励！'
     partial-failed: '{prefix}&c有 &f{count} &c个奖励发放失败: &f{items}'
+    partial-success: '{prefix}&e有 &f{count} &e个奖励因背包空间不足部分发放，剩余已保留在待领取列表，请清理背包后继续领取。'
     expired: '{prefix}&7有 &f{count} &7个奖励已过期失效，已自动清理。'
 
   # ---------- 待领取列表 ----------

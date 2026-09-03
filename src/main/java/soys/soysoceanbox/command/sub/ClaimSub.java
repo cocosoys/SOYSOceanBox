@@ -47,13 +47,16 @@ public class ClaimSub extends SubCommand {
             msg(player, "lottery.claim.expired", Placeholders.of("count", result.expired).build());
         }
 
-        if (result.claimed == 0 && result.failed == 0) {
+        if (result.claimed == 0 && result.failed == 0 && result.partial == 0) {
             msg(player, "lottery.claim.empty", null);
             return;
         }
 
         if (result.claimed > 0) {
             msg(player, "lottery.claim.success", Placeholders.of("count", result.claimed).build());
+        }
+        if (result.partial > 0) {
+            msg(player, "lottery.claim.partial-success", Placeholders.of("count", result.partial).build());
         }
         if (result.failed > 0) {
             String items = String.join(", ", result.failures);

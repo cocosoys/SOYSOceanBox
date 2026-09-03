@@ -466,6 +466,8 @@ public class LotteryManager {
         public int failed;
         /** 本次操作清理掉的已过期奖励数量 */
         public int expired;
+        /** 部分成功的奖励数（物品因背包空间不足仅部分放入，剩余数量已写回并保留在待领取列表） */
+        public int partial;
         public final List<String> failures = new ArrayList<>();
     }
 
@@ -542,15 +544,24 @@ public class LotteryManager {
         }
 
         for (PendingReward reward : toClaim) {
+            int originalAmount = reward.getItemAmount();
             if (grant(player, reward)) {
                 lp.removePending(reward.getClaimId());
                 result.claimed++;
             } else {
-                result.failed++;
-                result.failures.add(reward.getDisplay());
+                // 区分完全失败与部分成功：仅 ITEM 类型可能部分发放
+                if (reward.getType() == PendingReward.Type.ITEM
+                        && reward.getItemAmount() > 0
+                        && reward.getItemAmount() < originalAmount) {
+                    // 部分成功：grant() 已将剩余数量写回 reward，奖励保留在待领取列表
+                    result.partial++;
+                } else {
+                    result.failed++;
+                    result.failures.add(reward.getDisplay());
+                }
             }
         }
-        if (result.claimed > 0) {
+        if (result.claimed > 0 || result.partial > 0) {
             save(lp);
         }
         return result;
@@ -588,8 +599,26 @@ public class LotteryManager {
                 if (item == null) {
                     return false;
                 }
+                int originalAmount = item.getAmount();
                 Map<Integer, ItemStack> left = player.getInventory().addItem(item);
-                return left.isEmpty();
+                if (left.isEmpty()) {
+                    return true;
+                }
+                // 背包空间不足：统计未能放入的剩余数量
+                int remaining = 0;
+                for (ItemStack leftover : left.values()) {
+                    if (leftover != null) {
+                        remaining += leftover.getAmount();
+                    }
+                }
+                if (remaining >= originalAmount) {
+                    // 完全未放入，视为发放失败
+                    return false;
+                }
+                // 部分成功：将剩余数量写回奖励，保留在待领取列表供下次领取
+                // （避免玩家重复领取已放入背包的部分）
+                reward.setItemAmount(remaining);
+                return false;
             case COMMAND:
                 String cmd = reward.getCommand()
                         .replace("{player}", player.getName())

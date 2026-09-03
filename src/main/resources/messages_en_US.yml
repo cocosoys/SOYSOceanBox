@@ -41,6 +41,7 @@ lottery:
     empty: '{prefix}&7You have no pending rewards.'
     success: '{prefix}&aSuccessfully claimed &f{count} &areward(s)!'
     partial-failed: '{prefix}&cFailed to grant &f{count} &creward(s): &f{items}'
+    partial-success: '{prefix}&e&f{count} &ereward(s) partially granted due to insufficient inventory space. The remaining amount has been kept in the pending list. Please clear your inventory and claim again.'
     given: '{prefix}&aAn admin granted you a reward: &f{reward}&a, use &f/soceanbox claim &a to claim it.'
     expired: '{prefix}&7&f{count} &7reward(s) expired and were automatically cleared.'
 
