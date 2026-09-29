@@ -10,6 +10,10 @@ depend:
   - PlayerPoints
   - PlaceholderAPI
 
+# SOYSHTTPOverMC 为可选的网页框架：存在时自动注册扩展（管理 ERP + 用户中心页面），不存在时不影响游戏内功能
+softdepend:
+  - SOYSHTTPOverMC
+
 commands:
   soceanbox:
     description: SOYSOceanBox 玩家抽奖指令

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOYSOceanBox · 海洋宝箱</title>
+<style>
+  :root {
+    --bg: #0c0f14;
+    --panel: #171b23;
+    --panel-2: #1e232d;
+    --line: #2b313c;
+    --gold: #f5b942;
+    --gold-2: #ffd75e;
+    --cyan: #2fd4e8;
+    --text: #e8eaed;
+    --muted: #9aa3b2;
+    --green: #6fd07f;
+    --red: #e06b6b;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: radial-gradient(1200px 600px at 50% -10%, #18202c 0%, var(--bg) 60%);
+    color: var(--text);
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ============ Hero ============ */
+  .hero {
+    position: relative;
+    text-align: center;
+    padding: 70px 16px 40px;
+    overflow: hidden;
+    border-bottom: 1px solid var(--line);
+    background:
+      radial-gradient(600px 300px at 50% 0%, rgba(245,185,66,.14), transparent 70%),
+      linear-gradient(180deg, #12161e, #0c0f14);
+  }
+  .gift-hero { width: 128px; height: 128px; margin: 0 auto 14px; }
+  .gift-hero svg { width: 128px; height: 128px; image-rendering: pixelated;
+    filter: drop-shadow(0 0 18px rgba(245,185,66,.55)); animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0) rotate(-1.5deg);} 50% { transform: translateY(-12px) rotate(1.5deg);} }
+  .hero-title {
+    margin: 6px 0 2px; font-size: 44px; font-weight: 800; letter-spacing: 2px;
+    background: linear-gradient(180deg, var(--gold-2), var(--gold));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 2px 18px rgba(245,185,66,.25);
+  }
+  .hero-sub { margin: 0 0 20px; color: var(--cyan); font-size: 16px; letter-spacing: 4px; }
+
+  .player-bar {
+    display: inline-flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: center;
+    background: rgba(23,27,35,.85); border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px 18px; max-width: 92vw;
+  }
+  .pb-name { font-weight: 700; color: var(--gold-2); }
+  .pb-stat { color: var(--muted); font-size: 13px; }
+  .pb-stat b { color: var(--text); }
+  .scroll-hint { margin-top: 26px; color: var(--muted); font-size: 13px; animation: bob 1.8s infinite; }
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
+
+  /* ============ Buttons ============ */
+  .btn {
+    border: none; cursor: pointer; border-radius: 8px; padding: 9px 18px;
+    font-weight: 700; font-size: 14px; color: #2a1f04;
+    background: linear-gradient(180deg, var(--gold-2), var(--gold));
+    box-shadow: 0 3px 0 #a9791f, 0 6px 14px rgba(245,185,66,.25);
+    transition: transform .08s;
+  }
+  .btn:hover { filter: brightness(1.06); }
+  .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #a9791f; }
+  .btn.cyan { color: #042a30; background: linear-gradient(180deg,#5fe4f3,var(--cyan));
+    box-shadow: 0 3px 0 #1b8a97, 0 6px 14px rgba(47,212,232,.22); }
+  .btn.ghost { background: var(--panel-2); color: var(--text); box-shadow: none; border:1px solid var(--line); }
+  .btn.sm { padding: 6px 12px; font-size: 13px; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ============ Floors ============ */
+  #floors { max-width: 1020px; margin: 0 auto; padding: 26px 16px 80px; }
+  .floor {
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--line); border-left: 4px solid var(--gold);
+    border-radius: 14px; padding: 20px 22px; margin-bottom: 26px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+  .floor.vip { border-left-color: #d96bff; }
+  .floor-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .floor-icon { width: 56px; height: 56px; flex: 0 0 56px; }
+  .floor-icon svg { width: 56px; height: 56px; image-rendering: pixelated; }
+  .floor-title { font-size: 22px; font-weight: 800; margin: 0; }
+  .floor-tag { font-size: 12px; color: var(--muted); }
+  .floor-actions { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+  .floor-meta { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+  .rewards {
+    margin-top: 16px; padding: 12px; background: #8b8b8b; border-radius: 6px;
+    display: flex; flex-wrap: wrap; gap: 4px; border: 3px solid; border-color: #373737 #d7d7d7 #d7d7d7 #373737;
+  }
+  .floor-foot { margin-top: 12px; font-size: 12px; color: var(--muted); display:flex; gap:18px; flex-wrap:wrap; }
+  .badge { display:inline-block; padding:1px 8px; border-radius:20px; font-size:11px; }
+  .badge.gold { background: rgba(245,185,66,.18); color: var(--gold-2); }
+  .badge.cyan { background: rgba(47,212,232,.15); color: var(--cyan); }
+
+  /* MC 物品槽（renderSlot 生成） */
+  .slot { width: 48px; height: 48px; background: #8b8b8b; border: 2px solid;
+    border-color: #373737 #dcdcdc #dcdcdc #373737; position: relative; cursor: default; flex:0 0 auto; }
+  .px { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+  .px svg { width: 40px; height: 40px; image-rendering: pixelated; }
+  .amt { position: absolute; right: 2px; bottom: 0; color: #fff; font-weight: 700; font-size: 14px;
+    text-shadow: 1px 1px 0 #3f3f3f; line-height: 1; }
+  .ph { font-weight: 700; color: #222; font-size: 18px; }
+
+  /* ============ Elevator ============ */
+  .elevator { position: fixed; right: 18px; top: 50%; transform: translateY(-50%); z-index: 60;
+    display: flex; flex-direction: column; gap: 10px; }
+  .elevator a { display:flex; align-items:center; justify-content:flex-end; gap:8px; text-decoration:none; }
+  .elev-dot { width: 12px; height: 12px; border-radius: 50%; background: #3a4150; border: 2px solid #555f70; transition: all .15s; }
+  .elev-label { font-size: 11px; color: var(--muted); opacity: 0; transform: translateX(6px); transition: all .15s; white-space:nowrap; }
+  .elevator a:hover .elev-label, .elevator a.active .elev-label { opacity: 1; transform: translateX(0); }
+  .elevator a.active .elev-dot { background: var(--gold); border-color: var(--gold-2); box-shadow: 0 0 10px rgba(245,185,66,.7); }
+  .elevator a:hover .elev-dot { border-color: var(--gold-2); }
+
+  /* ============ Tooltip / Toast ============ */
+  .tooltip { position: fixed; z-index: 90; pointer-events: none; max-width: 260px;
+    background: rgba(12,15,20,.96); border: 1px solid var(--gold); border-radius: 6px;
+    padding: 8px 10px; font-size: 12px; line-height: 1.5; display: none; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+  .tooltip .t-name { font-weight: 700; color: var(--gold-2); }
+  .tooltip .t-row { color: var(--muted); }
+  .toast-wrap { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 100;
+    display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .toast { background: var(--panel-2); border: 1px solid var(--line); border-left: 4px solid var(--cyan);
+    border-radius: 8px; padding: 10px 16px; font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,.5);
+    animation: tin .2s; max-width: 90vw; }
+  .toast.ok { border-left-color: var(--green); }
+  .toast.err { border-left-color: var(--red); }
+  .toast.gold { border-left-color: var(--gold); }
+  @keyframes tin { from { opacity:0; transform: translateY(10px);} to {opacity:1; transform:none;} }
+
+  .empty { text-align:center; color: var(--muted); padding: 40px; }
+  @media (max-width: 720px) {
+    .hero-title { font-size: 32px; }
+    .elevator { right: 8px; } .elev-label { display:none; }
+    .floor-actions { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+  <header class="hero" id="hero">
+    <div class="gift-hero" id="giftHero"></div>
+    <h1 class="hero-title">SOYSOceanBox</h1>
+    <p class="hero-sub">海 洋 宝 箱</p>
+    <div class="player-bar" id="playerBar">正在连接服务器…</div>
+    <div class="scroll-hint">下滑选择你的宝箱 ▾</div>
+  </header>
+
+  <main id="floors">
+    <div class="empty">礼包加载中…</div>
+  </main>
+
+  <nav class="elevator" id="elevator"></nav>
+  <div class="tooltip" id="tooltip"></div>
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <script src="app.js"></script>
+  <script src="index.js"></script>
+</body>
+</html>

@@ -769,4 +769,96 @@ public class LotteryManager {
             return null;
         }
     }
+
+    // ================================================================
+    //  网页后台专用操作：直接发放 / 重置 / 切换奖池
+    // ================================================================
+
+    /**
+     * 绕过抽奖与待领取，直接把一个奖项定义发放给在线玩家（后台「直接发放」）。
+     *
+     * @return null 表示成功；否则为失败原因（如背包空间不足、经济插件缺失）
+     */
+    public String giveDirect(Player player, RewardDef def) {
+        if (def == null) {
+            return "奖项不存在或配置无效";
+        }
+        PendingReward reward = def.createPending();
+        int original = reward.getItemAmount();
+        if (grant(player, reward)) {
+            return null;
+        }
+        // 物品部分放入：grant 已把剩余数量写回 reward，明确提示剩余数量
+        if (reward.getType() == PendingReward.Type.ITEM && reward.getItemAmount() > 0
+                && reward.getItemAmount() < original) {
+            return "背包空间不足，尚有 " + reward.getItemAmount() + " 个未发放: " + def.getDisplay();
+        }
+        return "发放失败: " + def.getDisplay();
+    }
+
+    /**
+     * 重置目标玩家的指定数据（后台「重置领取」）。
+     *
+     * @param scopes 待重置项：pending / pity / limits / pool / cooldown / all
+     * @return 实际被重置的项中文描述（用于回执）
+     */
+    public List<String> resetPlayer(Player target, List<String> scopes) {
+        LotteryPlayer lp = getOrLoad(target);
+        boolean all = scopes.contains("all");
+        List<String> done = new ArrayList<>();
+        if (all || scopes.contains("pending")) {
+            lp.getPending().clear();
+            done.add("待领取奖励");
+        }
+        if (all || scopes.contains("pity")) {
+            lp.setDrawsSinceBigWin(0);
+            done.add("保底计数");
+        }
+        if (all || scopes.contains("limits")) {
+            lp.setDailyCount(0);
+            lp.setWeeklyCount(0);
+            done.add("每日/每周计数");
+        }
+        if (all || scopes.contains("pool")) {
+            lp.setActivePool("");
+            done.add("当前奖池");
+        }
+        if (all || scopes.contains("cooldown")) {
+            lp.setLastDrawTime(0L);
+            done.add("抽奖冷却");
+        }
+        save(lp);
+        return done;
+    }
+
+    /**
+     * 切换玩家当前生效奖池。
+     *
+     * @param poolName 奖池名；空串表示恢复默认
+     * @param force    后台操作传 true（可切到未生效/禁用奖池）；玩家自助传 false
+     * @return null 表示成功；否则为失败原因
+     */
+    public String switchPool(Player player, String poolName, boolean force) {
+        soys.soysoceanbox.config.LotteryConfig cfg = plugin.getLotteryConfig();
+        LotteryPlayer lp = getOrLoad(player);
+        if (poolName == null || poolName.isEmpty()) {
+            lp.setActivePool("");
+            save(lp);
+            return null;
+        }
+        if (!cfg.getPoolNames().contains(poolName)) {
+            return "奖池不存在: " + poolName;
+        }
+        if (!force) {
+            if (!cfg.isPoolEnabled(poolName)) {
+                return "奖池已被禁用: " + poolName;
+            }
+            if (!cfg.isPoolActive(poolName, System.currentTimeMillis())) {
+                return "奖池当前不在生效窗口内: " + poolName;
+            }
+        }
+        lp.setActivePool(poolName);
+        save(lp);
+        return null;
+    }
 }

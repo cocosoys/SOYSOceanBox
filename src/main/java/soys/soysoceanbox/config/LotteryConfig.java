@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -29,7 +30,7 @@ public class LotteryConfig {
     private FileConfiguration config;
 
     /** lottery.yml 当前期望的 config-version，升级时合并到此版本。 */
-    private static final int EXPECTED_VERSION = 5;
+    private static final int EXPECTED_VERSION = 6;
 
     public LotteryConfig(SOYSOceanBox plugin) {
         this.plugin = plugin;
@@ -50,10 +51,14 @@ public class LotteryConfig {
         }
         FileConfiguration user = YamlConfiguration.loadConfiguration(file);
         FileConfiguration defaults = loadDefaults();
-        if (defaults != null && ConfigUpgrader.mergeDefaults(user, defaults, EXPECTED_VERSION)) {
+        // 先做 v5→v6 奖池结构迁移（奖项裸列表 → 配置块），再合并缺失的默认键
+        boolean migrated = ConfigUpgrader.migratePoolsV6(user);
+        boolean merged = defaults != null
+                && ConfigUpgrader.mergeDefaults(user, defaults, EXPECTED_VERSION);
+        if (migrated || merged) {
             try {
                 user.save(file);
-                plugin.getLogger().info("[lottery.yml] 已自动合并新增配置项并升级到 config-version "
+                plugin.getLogger().info("[lottery.yml] 已自动升级到 config-version "
                         + EXPECTED_VERSION);
             } catch (Exception e) {
                 plugin.getLogger().warning("[lottery.yml] 升级保存失败: " + e.getMessage());
@@ -159,28 +164,57 @@ public class LotteryConfig {
         return new ArrayList<>(section.getKeys(false));
     }
 
-    /** 按名称读取奖池；名称无效时回退到默认奖池 */
+    /**
+     * 按名称读取奖池奖项列表；名称无效时回退到默认奖池。
+     * <p>v6 结构：奖项位于 {@code pools.<名称>.rewards} 列表。</p>
+     */
     public List<RewardDef> getRewardPool(String name) {
-        if (name == null || name.isEmpty()) {
-            name = getDefaultPoolName();
-        }
-        ConfigurationSection section = config.getConfigurationSection("pools." + name);
-        if (section == null) {
-            if (!getDefaultPoolName().equals(name)) {
-                section = config.getConfigurationSection("pools." + getDefaultPoolName());
-            }
-            if (section == null) {
-                return Collections.emptyList();
-            }
-        }
+        String resolved = resolvePoolName(name);
+        ConfigurationSection block = config.getConfigurationSection("pools." + resolved);
         List<RewardDef> pool = new ArrayList<>();
-        for (String id : section.getKeys(false)) {
-            RewardDef def = RewardDef.fromSection(id, section.getConfigurationSection(id));
+        if (block == null) {
+            return pool;
+        }
+        int autoIndex = 0;
+        for (Map<?, ?> raw : block.getMapList("rewards")) {
+            // getMapList 元素为 Map<?,?>，转为 String 键 Map
+            Map<String, Object> map = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> e : raw.entrySet()) {
+                map.put(String.valueOf(e.getKey()), e.getValue());
+            }
+            // 奖项未显式 id 时用索引兜底，保证 id 非空
+            Object idVal = map.get("id");
+            if (idVal == null || idVal.toString().isEmpty()) {
+                map.put("id", "reward_" + autoIndex);
+            }
+            RewardDef def = RewardDef.fromMap(map);
             if (def != null) {
                 pool.add(def);
             }
+            autoIndex++;
         }
         return pool;
+    }
+
+    /**
+     * 奖池是否被管理员启用（enabled 开关）。配置块缺失时视为启用。
+     */
+    public boolean isPoolEnabled(String name) {
+        ConfigurationSection block = config.getConfigurationSection(
+                "pools." + resolvePoolName(name));
+        return block == null || block.getBoolean("enabled", true);
+    }
+
+    /** 解析奖池名：空则默认；配置块不存在则回退默认。 */
+    private String resolvePoolName(String name) {
+        if (name == null || name.isEmpty()) {
+            return getDefaultPoolName();
+        }
+        if (config.getConfigurationSection("pools." + name) == null
+                && !getDefaultPoolName().equals(name)) {
+            return getDefaultPoolName();
+        }
+        return name;
     }
 
     /** 读取默认奖池（向后兼容） */
@@ -356,8 +390,13 @@ public class LotteryConfig {
      * 未配置 start/end 的奖池视为常驻（始终生效）。
      */
     public boolean isPoolActive(String name, long nowMillis) {
-        ConfigurationSection sec = config.getConfigurationSection("pools." + name);
+        ConfigurationSection sec = config.getConfigurationSection(
+                "pools." + resolvePoolName(name));
         if (sec == null) {
+            return false;
+        }
+        // 管理员禁用的奖池不生效
+        if (!sec.getBoolean("enabled", true)) {
             return false;
         }
         String start = sec.getString("start", "");

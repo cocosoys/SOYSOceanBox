@@ -2,7 +2,9 @@ package soys.soysoceanbox.lottery;
 
 import org.bukkit.configuration.ConfigurationSection;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -147,55 +149,163 @@ public class RewardDef {
     }
 
     /**
-     * 从配置节点解析一个奖项。解析失败时返回 null。
+     * 从配置节点解析一个奖项。id 优先取节点内 id 字段，否则用传入的 fallbackId。
      */
-    public static RewardDef fromSection(String id, ConfigurationSection section) {
+    public static RewardDef fromSection(String fallbackId, ConfigurationSection section) {
         if (section == null) {
             return null;
         }
+        Map<String, Object> values = sectionToMap(section);
+        if (!values.containsKey("id") && fallbackId != null) {
+            values.put("id", fallbackId);
+        }
+        return fromMap(values);
+    }
+
+    /**
+     * 从普通 Map（getMapList 的奖项、前端提交的 JSON）解析奖项。
+     * 类型非法或权重 <=0 时返回 null。
+     */
+    public static RewardDef fromMap(Map<?, ?> map) {
+        if (map == null) {
+            return null;
+        }
+        Object idObj = map.get("id");
+        String id = idObj == null ? null : idObj.toString();
+
         PendingReward.Type type;
         try {
-            type = PendingReward.Type.valueOf(section.getString("type", "MONEY").toUpperCase());
+            type = PendingReward.Type.valueOf(asString(map.get("type"), "MONEY").toUpperCase());
         } catch (IllegalArgumentException e) {
             return null;
         }
-        int weight = section.getInt("weight", 0);
+        int weight = toInt(map.get("weight"), 0);
         if (weight <= 0) {
             return null;
         }
-
-        Builder b = new Builder(id, type, weight)
-                .display(section.getString("display", id))
-                .value(section.getDouble("amount", 0));
+        String display = map.get("display") != null ? map.get("display").toString()
+                : (id != null ? id : "");
+        Builder b = new Builder(id, type, weight).display(display);
 
         if (type == PendingReward.Type.ITEM) {
-            b.material(section.getString("material"))
-                    .itemAmount(section.getInt("amount", 1))
-                    .durability(section.getInt("durability", 0))
-                    .itemName(section.getString("name"))
-                    .lore(section.getStringList("lore"))
-                    .enchants(parseEnchants(section.getConfigurationSection("enchants")))
-                    .customModelData(section.contains("custom-model-data")
-                            ? section.getInt("custom-model-data") : null)
-                    .nbt(section.getString("nbt"));
+            b.value(0)
+                    .material(asString(map.get("material"), null))
+                    .itemAmount(toInt(map.get("amount"), 1))
+                    .durability(toInt(map.get("durability"), 0))
+                    .itemName(asString(map.get("name"), null))
+                    .lore(toStringList(map.get("lore")))
+                    .enchants(toEnchantMap(map.get("enchants")))
+                    .customModelData(firstInt(map, "custom-model-data", "customModelData"))
+                    .nbt(asString(map.get("nbt"), null));
         } else if (type == PendingReward.Type.COMMAND) {
-            b.command(section.getString("command"));
+            b.value(0).command(asString(map.get("command"), null));
+        } else {
+            b.value(toDouble(map.get("amount"), 0));
         }
         return b.build();
     }
 
-    private static Map<String, Integer> parseEnchants(ConfigurationSection section) {
-        if (section == null) {
-            return null;
+    /** 把 ConfigurationSection 转为普通 Map（enchants 等子 section 一并展平）。 */
+    private static Map<String, Object> sectionToMap(ConfigurationSection section) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> e : section.getValues(false).entrySet()) {
+            Object v = e.getValue();
+            if (v instanceof ConfigurationSection) {
+                Map<String, Object> sub = new LinkedHashMap<>();
+                for (Map.Entry<String, Object> se
+                        : ((ConfigurationSection) v).getValues(false).entrySet()) {
+                    sub.put(se.getKey(), se.getValue());
+                }
+                v = sub;
+            }
+            out.put(e.getKey(), v);
         }
-        Map<String, Object> raw = section.getValues(false);
-        Map<String, Integer> map = new HashMap<>();
-        for (Map.Entry<String, Object> entry : raw.entrySet()) {
-            if (entry.getValue() instanceof Number) {
-                map.put(entry.getKey(), ((Number) entry.getValue()).intValue());
+        return out;
+    }
+
+    private static int toInt(Object o, int def) {
+        if (o instanceof Number) {
+            return ((Number) o).intValue();
+        }
+        if (o == null) {
+            return def;
+        }
+        try {
+            return Integer.parseInt(o.toString().trim());
+        } catch (NumberFormatException e) {
+            return def;
+        }
+    }
+
+    private static double toDouble(Object o, double def) {
+        if (o instanceof Number) {
+            return ((Number) o).doubleValue();
+        }
+        if (o == null) {
+            return def;
+        }
+        try {
+            return Double.parseDouble(o.toString().trim());
+        } catch (NumberFormatException e) {
+            return def;
+        }
+    }
+
+    private static String asString(Object o, String def) {
+        return o == null ? def : o.toString();
+    }
+
+    private static List<String> toStringList(Object o) {
+        List<String> out = new ArrayList<>();
+        if (o instanceof List) {
+            for (Object e : (List<?>) o) {
+                if (e != null) {
+                    out.add(e.toString());
+                }
             }
         }
-        return map.isEmpty() ? null : map;
+        return out;
+    }
+
+    /** 附魔 Map（附魔名→等级），兼容 ConfigurationSection / Map / List("NAME:lvl")。 */
+    private static Map<String, Integer> toEnchantMap(Object o) {
+        Map<String, Integer> out = new LinkedHashMap<>();
+        if (o instanceof List) {
+            for (Object e : (List<?>) o) {
+                String[] parts = e.toString().split(":");
+                if (parts.length >= 1 && !parts[0].isEmpty()) {
+                    out.put(parts[0].trim(), parts.length > 1 ? toInt(parts[1], 1) : 1);
+                }
+            }
+            return out.isEmpty() ? null : out;
+        }
+        Map<?, ?> source = null;
+        if (o instanceof ConfigurationSection) {
+            source = ((ConfigurationSection) o).getValues(false);
+        } else if (o instanceof Map) {
+            source = (Map<?, ?>) o;
+        }
+        if (source != null) {
+            for (Map.Entry<?, ?> e : source.entrySet()) {
+                if (e.getValue() instanceof Number) {
+                    out.put(e.getKey().toString(), ((Number) e.getValue()).intValue());
+                }
+            }
+        }
+        return out.isEmpty() ? null : out;
+    }
+
+    private static Integer firstInt(Map<?, ?> map, String... keys) {
+        for (String k : keys) {
+            Object v = map.get(k);
+            if (v != null) {
+                int parsed = toInt(v, Integer.MIN_VALUE);
+                if (parsed != Integer.MIN_VALUE) {
+                    return parsed;
+                }
+            }
+        }
+        return null;
     }
 
     private static class Builder {

@@ -15,6 +15,7 @@ import soys.soysoceanbox.config.LotteryConfig;
 import soys.soysoceanbox.config.MessageManager;
 import soys.soysoceanbox.lottery.LotteryManager;
 import soys.soysoceanbox.storage.StorageManager;
+import soys.soysoceanbox.web.OceanBoxExpansion;
 
 import java.util.logging.Level;
 
@@ -32,6 +33,7 @@ public final class SOYSOceanBox extends JavaPlugin {
     private StorageManager storageManager;
     private LotteryManager lotteryManager;
     private PlaceholderHook placeholderHook;
+    private OceanBoxExpansion webExpansion;
 
     public static SOYSOceanBox getInstance() {
         return instance;
@@ -54,6 +56,7 @@ public final class SOYSOceanBox extends JavaPlugin {
             registerCommands();
             registerListeners();
             registerPlaceholders();
+            registerWebExpansion();
 
             getLogger().info("SOYSOceanBox 已启用，共加载 "
                     + storageManager.countPlayers() + " 名玩家档案。");
@@ -64,6 +67,13 @@ public final class SOYSOceanBox extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (webExpansion != null) {
+            try {
+                webExpansion.unregister();
+            } catch (Throwable ignored) {
+                // 卸载阶段忽略异常
+            }
+        }
         if (lotteryManager != null) {
             lotteryManager.saveAllBlocking();
         }
@@ -129,6 +139,28 @@ public final class SOYSOceanBox extends JavaPlugin {
             getLogger().info("PlaceholderAPI 变量已注册。");
         } catch (Throwable t) {
             getLogger().warning("PlaceholderAPI 变量注册失败: " + t.getMessage());
+        }
+    }
+
+    /**
+     * 注册 SOYSHTTPOverMC 网页扩展（管理 ERP + 用户中心）。
+     * <p>框架插件不存在时静默跳过，游戏内功能不受影响。</p>
+     */
+    private void registerWebExpansion() {
+        Plugin framework = getServer().getPluginManager().getPlugin("SOYSHTTPOverMC");
+        if (framework == null) {
+            getLogger().info("未检测到 SOYSHTTPOverMC，跳过网页扩展注册（游戏内功能不受影响）。");
+            return;
+        }
+        try {
+            webExpansion = new OceanBoxExpansion(this);
+            if (webExpansion.register()) {
+                getLogger().info("SOYSHTTPOverMC 网页扩展已注册（管理 ERP + 用户中心）。");
+            } else {
+                getLogger().warning("SOYSHTTPOverMC 网页扩展注册失败（identifier 冲突或框架未就绪）。");
+            }
+        } catch (Throwable t) {
+            getLogger().warning("SOYSHTTPOverMC 网页扩展注册异常: " + t.getMessage());
         }
     }
 

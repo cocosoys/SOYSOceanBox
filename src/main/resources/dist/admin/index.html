@@ -1,0 +1,184 @@
+<!DOCTYPE html><html><head><meta charset=utf-8><meta http-equiv=X-UA-Compatible content="IE=edge,chrome=1"><meta name=renderer content=webkit><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><link rel=icon href=/web/plugins/soysoceanbox/admin/favicon.ico><script src=/web/plugins/soysoceanbox/admin/__SOYS_CONTEXT__.js></script><script src=/soys-auth.js></script><script src=/common/vue.min.js></script><script src=/common/vuex.min.js></script><script src=/common/vue-router.min.js></script><script src=/common/element-ui.min.js></script><link rel=stylesheet href=/common/element-ui.css><title>SOYSOceanBox Admin</title><!--[if lt IE 11]><script>window.location.href='./html/ie.html';</script><![endif]--><style>html,
+    body,
+    #app {
+      height: 100%;
+      margin: 0px;
+      padding: 0px;
+    }
+    .chromeframe {
+      margin: 0.2em 0;
+      background: #ccc;
+      color: #000;
+      padding: 0.2em 0;
+    }
+
+    #loader-wrapper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 999999;
+    }
+
+    #loader {
+      display: block;
+      position: relative;
+      left: 50%;
+      top: 50%;
+      width: 150px;
+      height: 150px;
+      margin: -75px 0 0 -75px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      border-top-color: #FFF;
+      -webkit-animation: spin 2s linear infinite;
+      -ms-animation: spin 2s linear infinite;
+      -moz-animation: spin 2s linear infinite;
+      -o-animation: spin 2s linear infinite;
+      animation: spin 2s linear infinite;
+      z-index: 1001;
+    }
+
+    #loader:before {
+      content: "";
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      right: 5px;
+      bottom: 5px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      border-top-color: #FFF;
+      -webkit-animation: spin 3s linear infinite;
+      -moz-animation: spin 3s linear infinite;
+      -o-animation: spin 3s linear infinite;
+      -ms-animation: spin 3s linear infinite;
+      animation: spin 3s linear infinite;
+    }
+
+    #loader:after {
+      content: "";
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      right: 15px;
+      bottom: 15px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      border-top-color: #FFF;
+      -moz-animation: spin 1.5s linear infinite;
+      -o-animation: spin 1.5s linear infinite;
+      -ms-animation: spin 1.5s linear infinite;
+      -webkit-animation: spin 1.5s linear infinite;
+      animation: spin 1.5s linear infinite;
+    }
+
+
+    @-webkit-keyframes spin {
+      0% {
+        -webkit-transform: rotate(0deg);
+        -ms-transform: rotate(0deg);
+        transform: rotate(0deg);
+      }
+      100% {
+        -webkit-transform: rotate(360deg);
+        -ms-transform: rotate(360deg);
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes spin {
+      0% {
+        -webkit-transform: rotate(0deg);
+        -ms-transform: rotate(0deg);
+        transform: rotate(0deg);
+      }
+      100% {
+        -webkit-transform: rotate(360deg);
+        -ms-transform: rotate(360deg);
+        transform: rotate(360deg);
+      }
+    }
+
+
+    #loader-wrapper .loader-section {
+      position: fixed;
+      top: 0;
+      width: 51%;
+      height: 100%;
+      background: #7171C6;
+      z-index: 1000;
+      -webkit-transform: translateX(0);
+      -ms-transform: translateX(0);
+      transform: translateX(0);
+    }
+
+    #loader-wrapper .loader-section.section-left {
+      left: 0;
+    }
+
+    #loader-wrapper .loader-section.section-right {
+      right: 0;
+    }
+
+
+    .loaded #loader-wrapper .loader-section.section-left {
+      -webkit-transform: translateX(-100%);
+      -ms-transform: translateX(-100%);
+      transform: translateX(-100%);
+      -webkit-transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+      transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+    }
+
+    .loaded #loader-wrapper .loader-section.section-right {
+      -webkit-transform: translateX(100%);
+      -ms-transform: translateX(100%);
+      transform: translateX(100%);
+      -webkit-transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+      transition: all 0.7s 0.3s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+    }
+
+    .loaded #loader {
+      opacity: 0;
+      -webkit-transition: all 0.3s ease-out;
+      transition: all 0.3s ease-out;
+    }
+
+    .loaded #loader-wrapper {
+      visibility: hidden;
+      -webkit-transform: translateY(-100%);
+      -ms-transform: translateY(-100%);
+      transform: translateY(-100%);
+      -webkit-transition: all 0.3s 1s ease-out;
+      transition: all 0.3s 1s ease-out;
+    }
+
+    .no-js #loader-wrapper {
+      display: none;
+    }
+
+    .no-js h1 {
+      color: #222222;
+    }
+
+    #loader-wrapper .load_title {
+      font-family: 'Open Sans';
+      color: #FFF;
+      font-size: 19px;
+      width: 100%;
+      text-align: center;
+      z-index: 9999999999999;
+      position: absolute;
+      top: 60%;
+      opacity: 1;
+      line-height: 30px;
+    }
+
+    #loader-wrapper .load_title span {
+      font-weight: normal;
+      font-style: italic;
+      font-size: 13px;
+      color: #FFF;
+      opacity: 0.5;
+    }</style><link href=/web/plugins/soysoceanbox/admin/static/css/chunk-libs.20020923.css rel=stylesheet><link href=/web/plugins/soysoceanbox/admin/static/css/app.e3d31780.css rel=stylesheet></head><body><div id=app><div id=loader-wrapper><div id=loader></div><div class="loader-section section-left"></div><div class="loader-section section-right"></div><div class=load_title>正在加载系统资源，请耐心等待</div></div></div><script>(function(e){function c(c){for(var u,t,a=c[0],d=c[1],h=c[2],o=0,b=[];o<a.length;o++)t=a[o],Object.prototype.hasOwnProperty.call(r,t)&&r[t]&&b.push(r[t][0]),r[t]=0;for(u in d)Object.prototype.hasOwnProperty.call(d,u)&&(e[u]=d[u]);k&&k(c);while(b.length)b.shift()();return f.push.apply(f,h||[]),n()}function n(){for(var e,c=0;c<f.length;c++){for(var n=f[c],u=!0,t=1;t<n.length;t++){var a=n[t];0!==r[a]&&(u=!1)}u&&(f.splice(c--,1),e=d(d.s=n[0]))}return e}var u={},t={runtime:0},r={runtime:0},f=[];function a(e){return d.p+"static/js/"+({}[e]||e)+"."+{"chunk-0c9e279b":"c0b675d5","chunk-11bf9778":"bb01de84","chunk-1a93286c":"1983dc36","chunk-2d0b68f8":"2b374407","chunk-2d0f012d":"ddeb06bb","chunk-38923710":"8e7dae33","chunk-44948348":"904433ce","chunk-46f2cf5c":"a8576aea","chunk-4d7f327a":"a0176dba","chunk-4db0520d":"a05ad27d","chunk-50976715":"0bf3c5cd","chunk-56c40055":"a5f461fe","chunk-57a0b77e":"b42b98bc","chunk-6eb3eb64":"4ff17faa","chunk-76349688":"7b25dd93","chunk-7cd15fd7":"0db5192f","chunk-7f0f6a37":"1c5172fc","chunk-bc8419fa":"e1673cb6","chunk-c72b4924":"20a0d3b8","chunk-d30cfed6":"bd59c39f","chunk-015618c2":"3d9ca8e9","chunk-1b14ffdd":"ac67882c","chunk-2720ec2e":"a933838f","chunk-386564d9":"7cdcf917","chunk-4577255d":"30efeeda","chunk-4cbdeae2":"7db6b0f9","chunk-6761b01c":"f9ae7985","chunk-6804f2d5":"1f1c4243","chunk-afb88078":"bf83ce61","chunk-beefdbec":"4d0a765b","chunk-bf42cb8a":"c3554e19","chunk-c233c3a4":"f3ab55ca","chunk-e648d5fe":"b916e9b8"}[e]+".js"}function d(c){if(u[c])return u[c].exports;var n=u[c]={i:c,l:!1,exports:{}};return e[c].call(n.exports,n,n.exports,d),n.l=!0,n.exports}d.e=function(e){var c=[],n={"chunk-1a93286c":1,"chunk-38923710":1,"chunk-44948348":1,"chunk-46f2cf5c":1,"chunk-4d7f327a":1,"chunk-50976715":1,"chunk-56c40055":1,"chunk-6eb3eb64":1,"chunk-76349688":1,"chunk-7f0f6a37":1,"chunk-c72b4924":1,"chunk-d30cfed6":1,"chunk-015618c2":1,"chunk-1b14ffdd":1,"chunk-2720ec2e":1,"chunk-386564d9":1,"chunk-4577255d":1,"chunk-4cbdeae2":1,"chunk-6761b01c":1,"chunk-6804f2d5":1,"chunk-afb88078":1,"chunk-bf42cb8a":1,"chunk-c233c3a4":1,"chunk-e648d5fe":1};t[e]?c.push(t[e]):0!==t[e]&&n[e]&&c.push(t[e]=new Promise((function(c,n){for(var u="static/css/"+({}[e]||e)+"."+{"chunk-0c9e279b":"31d6cfe0","chunk-11bf9778":"31d6cfe0","chunk-1a93286c":"13b00c05","chunk-2d0b68f8":"31d6cfe0","chunk-2d0f012d":"31d6cfe0","chunk-38923710":"564c8ddd","chunk-44948348":"7eceb5ca","chunk-46f2cf5c":"17fbdb6b","chunk-4d7f327a":"27e4bc51","chunk-4db0520d":"31d6cfe0","chunk-50976715":"2f0b79cf","chunk-56c40055":"a8e2573d","chunk-57a0b77e":"31d6cfe0","chunk-6eb3eb64":"ba38ca0f","chunk-76349688":"eb1f4306","chunk-7cd15fd7":"31d6cfe0","chunk-7f0f6a37":"a120d0b8","chunk-bc8419fa":"31d6cfe0","chunk-c72b4924":"01dca3bb","chunk-d30cfed6":"44871c18","chunk-015618c2":"04f445d3","chunk-1b14ffdd":"0c7f7dfe","chunk-2720ec2e":"bd72192d","chunk-386564d9":"c8e3e723","chunk-4577255d":"e92fb657","chunk-4cbdeae2":"72a5a7ef","chunk-6761b01c":"6f4da3a7","chunk-6804f2d5":"fa0f06b7","chunk-afb88078":"375c1cb4","chunk-beefdbec":"31d6cfe0","chunk-bf42cb8a":"faf2630b","chunk-c233c3a4":"368af117","chunk-e648d5fe":"bbc9fa95"}[e]+".css",r=d.p+u,f=document.getElementsByTagName("link"),a=0;a<f.length;a++){var h=f[a],o=h.getAttribute("data-href")||h.getAttribute("href");if("stylesheet"===h.rel&&(o===u||o===r))return c()}var b=document.getElementsByTagName("style");for(a=0;a<b.length;a++){h=b[a],o=h.getAttribute("data-href");if(o===u||o===r)return c()}var k=document.createElement("link");k.rel="stylesheet",k.type="text/css",k.onload=c,k.onerror=function(c){var u=c&&c.target&&c.target.src||r,f=new Error("Loading CSS chunk "+e+" failed.\n("+u+")");f.code="CSS_CHUNK_LOAD_FAILED",f.request=u,delete t[e],k.parentNode.removeChild(k),n(f)},k.href=r;var i=document.getElementsByTagName("head")[0];i.appendChild(k)})).then((function(){t[e]=0})));var u=r[e];if(0!==u)if(u)c.push(u[2]);else{var f=new Promise((function(c,n){u=r[e]=[c,n]}));c.push(u[2]=f);var h,o=document.createElement("script");o.charset="utf-8",o.timeout=120,d.nc&&o.setAttribute("nonce",d.nc),o.src=a(e);var b=new Error;h=function(c){o.onerror=o.onload=null,clearTimeout(k);var n=r[e];if(0!==n){if(n){var u=c&&("load"===c.type?"missing":c.type),t=c&&c.target&&c.target.src;b.message="Loading chunk "+e+" failed.\n("+u+": "+t+")",b.name="ChunkLoadError",b.type=u,b.request=t,n[1](b)}r[e]=void 0}};var k=setTimeout((function(){h({type:"timeout",target:o})}),12e4);o.onerror=o.onload=h,document.head.appendChild(o)}return Promise.all(c)},d.m=e,d.c=u,d.d=function(e,c,n){d.o(e,c)||Object.defineProperty(e,c,{enumerable:!0,get:n})},d.r=function(e){"undefined"!==typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},d.t=function(e,c){if(1&c&&(e=d(e)),8&c)return e;if(4&c&&"object"===typeof e&&e&&e.__esModule)return e;var n=Object.create(null);if(d.r(n),Object.defineProperty(n,"default",{enumerable:!0,value:e}),2&c&&"string"!=typeof e)for(var u in e)d.d(n,u,function(c){return e[c]}.bind(null,u));return n},d.n=function(e){var c=e&&e.__esModule?function(){return e["default"]}:function(){return e};return d.d(c,"a",c),c},d.o=function(e,c){return Object.prototype.hasOwnProperty.call(e,c)},d.p="/web/plugins/soysoceanbox/admin/",d.oe=function(e){throw console.error(e),e};var h=window["webpackJsonp"]=window["webpackJsonp"]||[],o=h.push.bind(h);h.push=c,h=h.slice();for(var b=0;b<h.length;b++)c(h[b]);var k=o;n()})([]);</script><script src=/web/plugins/soysoceanbox/admin/static/js/chunk-libs.5dce7f75.js></script><script src=/web/plugins/soysoceanbox/admin/static/js/app.b111eb8d.js></script></body></html>

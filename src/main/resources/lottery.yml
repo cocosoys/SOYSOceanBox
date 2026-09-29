@@ -8,7 +8,7 @@
 # ============================================================================
 
 # 配置文件版本，用于自动升级检测，请勿手动修改
-config-version: 5
+config-version: 6
 
 
 # ============================================================================
@@ -148,70 +148,84 @@ effects:
     pitch: 0.8
 
 # ============================================================
-#  多奖池
+#  多奖池（v6 配置块结构）
 # ------------------------------------------------------------
 #  default-pool: 默认生效的奖池名
 #  allow-player-switch: 是否允许玩家用 /soceanbox pool <名称> 自行切换
-#  pools.<名称>: 每个奖池是一组奖项（字段同单奖池）
 #
-#  限时 / 节日奖池：在奖池下加 start / end（格式 yyyy-MM-dd HH:mm，服务器本地时区）
-#  其时间窗口内的奖池才会被抽取；窗口外的奖池在 /soceanbox pool 中标记「已结束/未开始」。
-#  未配置 start/end 的奖池为常驻（始终生效）。
-#  例：
+#  每个奖池 pools.<名称> 是一个配置块：
+#    enabled: 是否启用（false 时该奖池对玩家不可见、不可抽取，对应后台「启用/禁用」）
+#    start / end: 限时窗口（格式 yyyy-MM-dd HH:mm，服务器本地时区），留空为常驻
+#    rewards: 奖项列表（每项字段：id / type / weight / display / amount / material ...）
+#
+#  升级说明：v5 的「奖项裸列表」会在加载时自动迁移为本结构（奖项与玩家数据不变）。
+#
+#  例（限时节日奖池）：
 #    festival:
+#      enabled: true
 #      start: '2026-12-24 00:00'
 #      end:   '2026-12-26 00:00'
-#      - id: xmas_gift
-#        type: item
-#        material: NETHER_STAR
-#        amount: 1
-#        weight: 100
-#        display: '&e圣诞限定礼物'
+#      rewards:
+#        - id: xmas_gift
+#          type: item
+#          material: NETHER_STAR
+#          amount: 1
+#          weight: 100
+#          display: '&e圣诞限定礼物'
 # ============================================================
 default-pool: default
 allow-player-switch: true
 
 pools:
   default:
-    - id: coins
-      type: money
-      amount: 1000
-      weight: 40
-      display: '&e1000 金币'
-    - id: points
-      type: points
-      amount: 50
-      weight: 30
-      display: '&b50 点券'
-    - id: diamond
-      type: item
-      material: DIAMOND
-      amount: 1
-      weight: 20
-      display: '&b钻石 x1'
-    - id: emerald_cmd
-      type: command
-      command: 'give {player} minecraft:emerald 1'
-      weight: 10
-      display: '&a绿宝石 x1（指令发放）'
+    enabled: true
+    start: ''
+    end: ''
+    rewards:
+      - id: coins
+        type: money
+        amount: 1000
+        weight: 40
+        display: '&e1000 金币'
+      - id: points
+        type: points
+        amount: 50
+        weight: 30
+        display: '&b50 点券'
+      - id: diamond
+        type: item
+        material: DIAMOND
+        amount: 1
+        weight: 20
+        display: '&b钻石 x1'
+      - id: emerald_cmd
+        type: command
+        command: 'give {player} minecraft:emerald 1'
+        weight: 10
+        display: '&a绿宝石 x1（指令发放）'
 
   # 示例第二个奖池：管理员可用 /soceanboxadmin setpool <玩家> vip 指定
   vip:
-    - id: vip_money
-      type: money
-      amount: 5000
-      weight: 50
-      display: '&e5000 金币'
-    - id: vip_item
-      type: item
-      material: NETHERITE_INGOT
-      amount: 1
-      weight: 30
-      display: '&d下界合金锭 x1'
-      custom-model-data: 1001
-      nbt: '{display:{Name:"{\"text\":\"★ VIP 专属 ★\"}"}}'
-    - id: vip_cmd
-      type: command
-      command: 'give {player} minecraft:diamond 3'
-      weight: 20
-      display: '&b钻石 x3（指令发放）'
+    enabled: true
+    start: ''
+    end: ''
+    rewards:
+      - id: vip_money
+        type: money
+        amount: 5000
+        weight: 50
+        display: '&e5000 金币'
+      - id: vip_item
+        type: item
+        material: DIAMOND_BLOCK
+        amount: 1
+        weight: 30
+        display: '&d★ VIP 专属钻石块 ★'
+        name: '&d&l★ VIP 专属 ★'
+        lore:
+          - '&7尊贵身份的专属奖励'
+      - id: vip_cmd
+        type: command
+        command: 'give {player} minecraft:diamond 3'
+        weight: 20
+        display: '&b钻石 x3（指令发放）'
