@@ -1,8 +1,8 @@
 # ============================================================================
-#  SOYSOceanBox - Message file (en_US)
+#  SOYSOceanBox - Message file (language/en_us.yml)
 # ----------------------------------------------------------------------------
-#  English overlay for messages.yml. Only keys present here override the
-#  default zh_CN messages. Missing keys fall back to the default file.
+#  English overlay for language/zh_cn.yml. Only keys present here override the
+#  default zh_cn messages. Missing keys fall back to the default file.
 #  Color codes use the & symbol. An empty string '' means the message is suppressed.
 # ============================================================================
 

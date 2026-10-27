@@ -17,12 +17,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 消息文件（messages.yml）管理器。
+ * 消息文件（language/zh_cn.yml 等）管理器。
  * <p>负责消息读取、占位符替换与发送。缺失的键会回退到 jar 内的默认值。</p>
  */
 public class MessageManager {
 
     private static final String PREFIX_KEY = "prefix";
+    private static final String LANG_DIR = "language";
+    private static final String DEFAULT_LANG = "zh_cn";
 
     private final SOYSOceanBox plugin;
     private FileConfiguration messages;
@@ -35,18 +37,23 @@ public class MessageManager {
     }
 
     public void reload() {
-        File file = new File(plugin.getDataFolder(), "messages.yml");
-        if (!file.exists()) {
-            plugin.saveResource("messages.yml", false);
+        // 消息文件统一存放于 <数据目录>/language/<lang>.yml（如 zh_cn.yml / en_us.yml），
+        // 与 SOYSHTTPOverMC 等多语言插件的目录约定保持一致，便于自动识别。
+        File langDir = new File(plugin.getDataFolder(), LANG_DIR);
+        File defaultFile = new File(langDir, DEFAULT_LANG + ".yml");
+        if (!defaultFile.exists()) {
+            if (!langDir.exists()) {
+                langDir.mkdirs();
+            }
+            plugin.saveResource(LANG_DIR + "/" + DEFAULT_LANG + ".yml", false);
         }
-        this.messages = YamlConfiguration.loadConfiguration(file);
-        this.defaults = loadInternalDefaults();
+        this.messages = YamlConfiguration.loadConfiguration(defaultFile);
+        this.defaults = loadInternalDefaults(DEFAULT_LANG);
         if (defaults != null) {
             messages.setDefaults(defaults);
         }
 
-        // 多语言叠加：若 general.language 指定了非默认语言，叠加 messages_<lang>.yml
-        // （当前仅提供 zh_CN；其余语言文件不存在时自动回退到默认 messages.yml）
+        // 多语言叠加：若 general.language 指定了非默认语言，叠加 language/<lang>.yml
         overlayLanguageFile();
 
         this.prefix = messages.getString(PREFIX_KEY, "");
@@ -59,28 +66,28 @@ public class MessageManager {
      * 的管理员可改副本，若不存在则回退到 jar 内内置副本（便于开箱即用）。</p>
      */
     private void overlayLanguageFile() {
-        String lang = plugin.getConfigManager().getLanguage();
-        if (lang == null || lang.isEmpty() || "zh_CN".equalsIgnoreCase(lang)) {
+        String lang = normalize(plugin.getConfigManager().getLanguage());
+        if (lang == null || lang.isEmpty() || DEFAULT_LANG.equals(lang)) {
             return;
         }
-        String fileName = "messages_" + lang + ".yml";
+        String resourcePath = LANG_DIR + "/" + lang + ".yml";
         FileConfiguration overlay = null;
-        File langFile = new File(plugin.getDataFolder(), fileName);
+        File langFile = new File(plugin.getDataFolder(), resourcePath);
         if (langFile.exists()) {
             overlay = YamlConfiguration.loadConfiguration(langFile);
         } else {
-            try (InputStream in = plugin.getResource(fileName)) {
+            try (InputStream in = plugin.getResource(resourcePath)) {
                 if (in != null) {
                     overlay = YamlConfiguration.loadConfiguration(
                             new InputStreamReader(in, StandardCharsets.UTF_8));
-                    plugin.getLogger().info("[i18n] 使用内置语言文件: " + fileName);
+                    plugin.getLogger().info("[i18n] 使用内置语言文件: " + resourcePath);
                 }
             } catch (IOException ignored) {
                 // 读取内置资源失败，忽略
             }
         }
         if (overlay == null) {
-            plugin.getLogger().info("[i18n] 未找到语言文件 " + fileName + "，使用默认 zh_CN 消息。");
+            plugin.getLogger().info("[i18n] 未找到语言文件 " + resourcePath + "，使用默认 zh_cn 消息。");
             return;
         }
         try {
@@ -100,8 +107,16 @@ public class MessageManager {
         }
     }
 
-    private FileConfiguration loadInternalDefaults() {
-        try (InputStream stream = plugin.getResource("messages.yml")) {
+    /** 将配置中的语言代码归一化为文件名形式：zh_CN / en-US / en_us -> zh_cn / en_us。 */
+    private String normalize(String lang) {
+        if (lang == null) {
+            return null;
+        }
+        return lang.trim().toLowerCase().replace('-', '_');
+    }
+
+    private FileConfiguration loadInternalDefaults(String langCode) {
+        try (InputStream stream = plugin.getResource(LANG_DIR + "/" + langCode + ".yml")) {
             if (stream == null) {
                 return null;
             }
